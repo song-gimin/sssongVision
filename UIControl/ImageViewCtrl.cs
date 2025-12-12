@@ -47,6 +47,11 @@ namespace sssongVision.UIControl
             DoubleBuffered = true;  // 화면 깜빡임을 방지하기 위한 더블 버퍼링 설정
         }
 
+        public Bitmap GetCurBitmap()
+        {
+            return _bitmapImage;
+        }
+
         private void ResizeCanvas()
         {
             if (Width <= 0 || Height <= 0 || _bitmapImage == null) return;

@@ -56,21 +56,25 @@ namespace sssongVision
             var cameraForm = new CameraForm();
             cameraForm.Show(_dockPanel, DockState.Document); //도킹에 쓰려면 붙이는 애들도 도킹화 시켜야함. CameraForm.cs 상속 바꿔주기
 
+            // 카메라 실행 창 (촬상)
+            var runWindow = new RunForm();
+            runWindow.Show(cameraForm.Pane, DockAlignment.Bottom, 0.2);
+
             // 검사 결과 창 (카메라 창 아래 30% 비율로 띄우기)
-            var resusltForm = new ResultForm();
-            resusltForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
+            //var resusltForm = new ResultForm();
+            //resusltForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
 
             // 속성 창 (오른쪽에 창 띄우기)
             var propForm = new PropertiesForm();
             propForm.Show(_dockPanel, DockState.DockRight);
 
             // 속성창에 statistic 창 추가
-            var statisticForm = new StatisticForm();
-            statisticForm.Show(_dockPanel, DockState.DockRight);
+            //var statisticForm = new StatisticForm();
+            //statisticForm.Show(_dockPanel, DockState.DockRight);
 
             // 로그 창 (우측 속성 창 만든 영역 아래에 50% 비율로 띄우기)
-            var logForm = new LogForm();
-            logForm.Show(propForm.Pane, DockAlignment.Bottom, 0.5);  //위로 띄우고 싶으면 Top 사용하셈~
+            //var logForm = new LogForm();
+            //logForm.Show(propForm.Pane, DockAlignment.Bottom, 0.5);  //위로 띄우고 싶으면 Top 사용하셈~
 
         }
 
