@@ -242,10 +242,191 @@ namespace sssongVision.Core
         }
 
         #region Property
+        public byte[] this[int i]
+        {
+            get => _imageInfo[i].ImageData;
+            set => value.CopyTo(_imageInfo[i].ImageData, 0);
+        }
 
+        public System.Drawing.Size ImageSize
+        {
+            get
+            {
+                if (_inspectionImage == null) return System.Drawing.Size.Empty;
+
+                return new System.Drawing.Size(_inspectionImage.Width, _inspectionImage.Height);
+            }
+        }
+
+        public int PixelBpp
+        {
+            get => _inspectionImage.PixelBpp;
+        }
+
+        public SizeF PixelResolution
+        {
+            get => _inspectionImage.PixelResolution;
+        }
+
+        public int Width
+        {
+            get => _inspectionImage.Width;
+        }
+
+        public int Height
+        {
+            get => _inspectionImage.Height;
+        }
+
+        public int Stride
+        {
+            get => _inspectionImage.Stride;
+        }
+
+        public long Length
+        {
+            get => _inspectionImage.Stride * _inspectionImage.Height;
+        }
         #endregion Property
 
+        public Dictionary<int, Dictionary<eImageChannel, ImagePtr>> GetImageByChannelToClone()
+        {
+            if (_inspectionImage.PixelBpp == 8)
+            {
+                return _imageInfo.ToDictionary(kvp => kvp.Key,
+                    kvp => new Dictionary<eImageChannel, ImagePtr>
+                    {{ eImageChannel.Gray,
+                            new ImagePtr(
+                                new IntPtr(kvp.Value.Buffer.ToInt64()),
+                                kvp.Value.ImageData.Length,
+                                kvp.Value.Width,
+                                kvp.Value.Height,
+                                kvp.Value.Stride,
+                                (int)kvp.Value.PixelBpp) }
+                    });
+            }
+            else
+            {
+                return _imageByChannel.ToDictionary(x => x.Key, y => y.Value.ToDictionary(
+                k => k.Key, z => new ImagePtr(new IntPtr(z.Value.Buffer.ToInt64()), z.Value.ImageData.Length, z.Value.Width, z.Value.Height, z.Value.Stride, (int)z.Value.PixelBpp)));
+            }
+        }
 
+        public Dictionary<int, Dictionary<eImageChannel, ImagePtr>> GetImageByChannel()
+        {
+            if (_inspectionImage.PixelBpp == 8)
+            {
+                return _imageInfo.ToDictionary(kvp => kvp.Key,
+                    kvp => new Dictionary<eImageChannel, ImagePtr>
+                    {{ eImageChannel.Gray,
+                            new ImagePtr(
+                                kvp.Value.Buffer,
+                                kvp.Value.ImageData.Length,
+                                kvp.Value.Width,
+                                kvp.Value.Height,
+                                kvp.Value.Stride,
+                                (int)kvp.Value.PixelBpp) }
+                    });
+            }
+            else
+            {
+                return _imageByChannel.ToDictionary(x => x.Key, y => y.Value.ToDictionary(
+                k => k.Key, z => new ImagePtr(z.Value.Buffer, z.Value.ImageData.Length, z.Value.Width, z.Value.Height, z.Value.Stride, (int)z.Value.PixelBpp)));
+            }
+        }
+
+        public byte[] GetInspectionBuffer(int index = 0)
+        {
+            if (_imageInfo.Count <= index) return null;
+
+            return _imageInfo[index].ImageData;
+        }
+
+        public IntPtr GetnspectionBufferPtr(int index = 0)
+        {
+            if (_imageInfo.Count <= index) return IntPtr.Zero;
+
+            return _imageInfo[index].Buffer;
+        }
+
+        public GCHandle GetInspectionBufferHandle(int index = 0)
+        {
+            if (_imageInfo.Count <= index) return new GCHandle();
+
+            return _imageInfo[index].Handle;
+        }
+
+        public Bitmap GetBitmap(int index = 0, eImageChannel channel = eImageChannel.Color)
+        {
+            if (index < 0 || _imageInfo.Count <= index) return null;
+
+            if (PixelBpp == 8 || channel == eImageChannel.Color)
+            {
+                return _imageInfo[index].ToBitmap();
+            }
+            else
+            {
+                return _imageByChannel[index][channel].ToBitmap();
+            }
+        }
+
+        public Mat GetMat(int index = 0, eImageChannel channel = eImageChannel.Gray)
+        {
+            if (_imageInfo.Count <= index) return null;
+
+            if (channel == eImageChannel.Gray)
+            {
+                return _imageInfo[index].ToMat();
+            }
+            else
+            {
+                if (_imageByChannel[index][channel] != null)
+                    return _imageByChannel[index][channel].ToMat();
+            }
+
+            return null;
+        }
+
+        public Dictionary<int, Bitmap> GetBitmaps()
+        {
+            Dictionary<int, Bitmap> listBitmap = new Dictionary<int, Bitmap>();
+            if (PixelBpp == 8)
+            {
+                foreach (var light in _imageInfo)
+                {
+                    //listBitmap.Add(light.Key, (Bitmap)(light.Value.ToBitmap().Clone()));
+                    Bitmap bitmap = (Bitmap)light.Value.ToBitmap().Clone();
+                    listBitmap.Add(light.Key, bitmap);
+                }
+            }
+            else
+            {
+                foreach (var light in _imageByChannel)
+                {
+                    //listBitmap.Add(light.Key, (Bitmap)(light.Value[eImageChannel.Color].ToBitmap().Clone()));
+                    Bitmap bitmap = (Bitmap)light.Value[eImageChannel.Color].ToBitmap().Clone();
+                    listBitmap.Add(light.Key, bitmap);
+                }
+            }
+
+            return listBitmap;
+        }
+
+        public void Split(int index)
+        {
+            if (!UseImageSplit) return;
+
+            if (_imageInfo.Count <= index) return;
+
+            if (PixelBpp == 8) return;
+
+            var original = _imageInfo[index].ToBitmap();
+
+            original.Split(_imageByChannel[index][eImageChannel.Red].ImageData,
+                _imageByChannel[index][eImageChannel.Green].ImageData,
+                _imageByChannel[index][eImageChannel.Blue].ImageData,
+                _imageByChannel[index][eImageChannel.Gray].ImageData);
+        }
 
         #region Disposable
         private bool disposed = false; // to detect redundant calls
