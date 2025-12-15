@@ -57,8 +57,8 @@ namespace sssongVision
             cameraForm.Show(_dockPanel, DockState.Document); //도킹에 쓰려면 붙이는 애들도 도킹화 시켜야함. CameraForm.cs 상속 바꿔주기
 
             // 카메라 실행 창 (촬상)
-            var runWindow = new RunForm();
-            runWindow.Show(cameraForm.Pane, DockAlignment.Bottom, 0.2);
+            var runForm = new RunForm();
+            runForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.2);
 
             // 검사 결과 창 (카메라 창 아래 30% 비율로 띄우기)
             //var resusltForm = new ResultForm();
