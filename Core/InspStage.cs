@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using sssongVision.Inspect;
 
 namespace sssongVision.Core
 {
@@ -15,15 +16,17 @@ namespace sssongVision.Core
 
         private ImageSpace _imageSpace = null;
         private HikRobotCam _grabManager = null;
-        //SaigeAI _saigeAI; // SaigeAI 인스턴스
+
+        SaigeAI _saigeAI;
 
         public InspStage() { }
+
         public ImageSpace ImageSpace
         {
             get => _imageSpace;
         }
 
-        /*public SaigeAI AIModule
+        public SaigeAI AIModule
         {
             get
             {
@@ -31,7 +34,7 @@ namespace sssongVision.Core
                     _saigeAI = new SaigeAI();
                 return _saigeAI;
             }
-        }*/
+        }
 
         public bool Initialize()
         {

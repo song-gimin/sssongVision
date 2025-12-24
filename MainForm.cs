@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OpenCvSharp;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -6,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 
@@ -33,8 +35,8 @@ namespace sssongVision
 
             // MainForm Tab & DockPanel Tab 안겹치게
             // menuStrip 아래에서 시작하게
-            _dockPanel.Location = new Point(0, menuStrip1.Height);
-            _dockPanel.Size = new Size(ClientSize.Width, ClientSize.Height - menuStrip1.Height);
+            _dockPanel.Location = new System.Drawing.Point(0, menuStrip1.Height);
+            _dockPanel.Size = new System.Drawing.Size(ClientSize.Width, ClientSize.Height - menuStrip1.Height);
             _dockPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
             menuStrip1.BringToFront();  // 혹시 덮어도 메뉴가 앞으로 오게
@@ -104,6 +106,33 @@ namespace sssongVision
                     cameraForm.LoadImage(filePath);
                 }
             }
+        }
+
+        // 이미지 저장
+        private void imageSaveToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            /*CameraForm cameraForm = GetDockForm<CameraForm>();
+   
+            if (cameraForm == null) return;
+
+            // 저장할 이미지가 있는지
+            if (cameraForm.CurMat == null)
+            {
+                MessageBox.Show("저장할 이미지가 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (SaveFileDialog saveDialog = new SaveFileDialog())
+            {
+                saveDialog.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
+
+                if (saveDialog.ShowDialog() == DialogResult.OK)
+                {
+                    Cv2.ImWrite(saveDialog.FileName, cameraForm.CurMat);
+                    MessageBox.Show("이미지를 저장했습니다.", "알람");
+                }
+            }
+            */
         }
     }
 }

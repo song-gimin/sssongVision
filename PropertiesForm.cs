@@ -17,7 +17,8 @@ namespace sssongVision
     public enum PropertyType
     {
         Binary,
-        Filter
+        Filter,
+        SaigeAI
     }
     public partial class PropertiesForm : DockContent
     {
@@ -29,8 +30,9 @@ namespace sssongVision
             InitializeComponent();
 
             // 속성 탭 초기화
-            LoadOptionControl(PropertyType.Filter);
             LoadOptionControl(PropertyType.Binary);
+            LoadOptionControl(PropertyType.Filter);
+            LoadOptionControl(PropertyType.SaigeAI);
         }
 
         // 속성 탭 생성 : 부모변수로 받음
@@ -47,6 +49,10 @@ namespace sssongVision
                 case PropertyType.Filter:
                     ImageFilterProp filterProp = new ImageFilterProp();
                     curProp = filterProp;
+                    break;
+                case PropertyType.SaigeAI:
+                    SaigeAIProp saigeProp = new SaigeAIProp();
+                    curProp = saigeProp;
                     break;
                 default:
                     MessageBox.Show("유효하지 않은 옵션입니다.");

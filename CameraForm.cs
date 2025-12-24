@@ -1,4 +1,6 @@
-﻿using sssongVision.Core;
+﻿using OpenCvSharp;
+using OpenCvSharp.Extensions;
+using sssongVision.Core;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -20,13 +22,25 @@ namespace sssongVision
             InitializeComponent();
         }
 
+        //private Mat _curMat;
+        //public Mat CurMat => _curMat;
+
         // 이미지 Open하면, PictureBox에 로드한 이미지 띄우기
         public void LoadImage(string filePath)
         {
             if (File.Exists(filePath) == false) return;
 
             Image bitmap = Image.FromFile(filePath);
+
             imageViewer.LoadBitmap((Bitmap)bitmap);
+
+            /*using (var bitmap = new Bitmap(filePath))
+            {
+                imageViewer.LoadBitmap((Bitmap)bitmap);
+
+                _curMat?.Dispose();
+                _curMat = BitmapConverter.ToMat(bitmap);
+            }*/
         }
 
         private void CameraForm_Resize(object sender, EventArgs e)
