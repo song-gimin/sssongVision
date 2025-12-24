@@ -1,4 +1,5 @@
-﻿using OpenCvSharp;
+﻿using sssongVision.Core;
+using OpenCvSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -48,7 +49,7 @@ namespace sssongVision
             LoadDockingWindows();
 
             //전역 인스턴스 초기화
-            //Global.Inst.Initialize();
+            Global.Inst.InspStage.Initialize();
         }
 
         // 도킹 윈도우를 로드하는 메서드 생성 (private)

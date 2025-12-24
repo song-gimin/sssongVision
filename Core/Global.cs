@@ -27,6 +27,7 @@ namespace sssongVision.Core
         {
             get { return _stage; }
         }
+
         public Global()
         {
         }

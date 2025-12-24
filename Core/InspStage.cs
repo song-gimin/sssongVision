@@ -16,6 +16,7 @@ namespace sssongVision.Core
 
         private ImageSpace _imageSpace = null;
         private HikRobotCam _grabManager = null;
+        //private WebCam _grabManager = null;
 
         SaigeAI _saigeAI;
 
@@ -53,8 +54,7 @@ namespace sssongVision.Core
 
         public void InitModelGrab(int bufferCount)
         {
-            if (_grabManager == null)
-                return;
+            if (_grabManager == null) return;
 
             int pixelBpp = 8;
             _grabManager.GetPixelBpp(out pixelBpp);
@@ -99,8 +99,7 @@ namespace sssongVision.Core
 
         public void Grab(int bufferIndex)
         {
-            if (_grabManager == null)
-                return;
+            if (_grabManager == null) return;
 
             _grabManager.Grab(bufferIndex, true);
         }
@@ -165,11 +164,11 @@ namespace sssongVision.Core
                 if (disposing)
                 {
                     // Dispose managed resources.
-                    /*if (_saigeAI != null)
+                    if (_saigeAI != null)
                     {
                         _saigeAI.Dispose();
                         _saigeAI = null;
-                    }*/
+                    }
                     if (_grabManager != null)
                     {
                         _grabManager.Dispose();
