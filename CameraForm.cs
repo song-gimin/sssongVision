@@ -22,9 +22,6 @@ namespace sssongVision
             InitializeComponent();
         }
 
-        //private Mat _curMat;
-        //public Mat CurMat => _curMat;
-
         // 이미지 Open하면, PictureBox에 로드한 이미지 띄우기
         public void LoadImage(string filePath)
         {
@@ -33,14 +30,6 @@ namespace sssongVision
             Image bitmap = Image.FromFile(filePath);
 
             imageViewer.LoadBitmap((Bitmap)bitmap);
-
-            /*using (var bitmap = new Bitmap(filePath))
-            {
-                imageViewer.LoadBitmap((Bitmap)bitmap);
-
-                _curMat?.Dispose();
-                _curMat = BitmapConverter.ToMat(bitmap);
-            }*/
         }
 
         private void CameraForm_Resize(object sender, EventArgs e)
@@ -56,7 +45,7 @@ namespace sssongVision
         {
             if (bitmap == null)
             {
-                //#6_INSP_STAGE#3 업데이트시 bitmap이 없다면 InspSpace에서 가져온다
+                // 업데이트시 bitmap이 없다면 InspSpace에서 가져온다
                 bitmap = Global.Inst.InspStage.GetBitmap(0);
                 if (bitmap == null)
                     return;
@@ -64,6 +53,11 @@ namespace sssongVision
 
             if (imageViewer != null)
                 imageViewer.LoadBitmap(bitmap);
+
+            // 현재 선택된 이미지로 Previwe이미지 갱신
+            // 이진화 프리뷰에서 각 채널별로 설정이 적용되도록, 현재 이미지를 프리뷰 클래스 설정            
+            Mat curImage = Global.Inst.InspStage.GetMat();
+            Global.Inst.InspStage.PreView.SetImage(curImage);
         }
 
         public Bitmap GetDisplayImage()
@@ -74,6 +68,11 @@ namespace sssongVision
                 curImage = imageViewer.GetCurBitmap();
 
             return curImage;
+        }
+
+        public void UpdateImageViewer()
+        {
+            imageViewer.Invalidate();
         }
     }
 }

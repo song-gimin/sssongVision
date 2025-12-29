@@ -350,7 +350,7 @@ namespace sssongVision.Grab
             return true;
         }
 
-        internal override bool SetGain(long gain)
+        internal override bool SetGain(float gain)
         {
             if (_device == null) return false;
 
@@ -366,7 +366,7 @@ namespace sssongVision.Grab
             return true;
         }
 
-        internal override bool GetGain(out long gain)
+        internal override bool GetGain(out float gain)
         {
             gain = 0;
             if (_device == null) return false;

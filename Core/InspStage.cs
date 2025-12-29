@@ -6,6 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using sssongVision.Inspect;
+using sssongVision.Algorithm;
+using OpenCvSharp.Extensions;
+using OpenCvSharp;
 
 namespace sssongVision.Core
 {
@@ -15,10 +18,14 @@ namespace sssongVision.Core
         public static readonly int MAX_GRAB_BUF = 5;
 
         private ImageSpace _imageSpace = null;
-        private HikRobotCam _grabManager = null;
-        //private WebCam _grabManager = null;
+        private GrabModel _grabManager = null;
+        private CameraType _camType = CameraType.WebCam;
 
         SaigeAI _saigeAI;
+
+        // 이진화 Preview에 필요한 변수 선언
+        BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
+        private PreviewImage _previewImage = null;
 
         public InspStage() { }
 
@@ -37,12 +44,42 @@ namespace sssongVision.Core
             }
         }
 
+        // 이진화 알고리즘과 프리뷰 변수에 대한 프로퍼티 생성
+        public BlobAlgorithm BlobAlgorithm
+        {
+            get => _blobAlgorithm;
+        }
+
+        public PreviewImage PreView
+        {
+            get => _previewImage;
+        }
+
+
         public bool Initialize()
         {
             _imageSpace = new ImageSpace();
-            _grabManager = new HikRobotCam();
 
-            if (_grabManager.InitGrab() == true)
+            // 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
+            _blobAlgorithm = new BlobAlgorithm();
+            _previewImage = new PreviewImage();
+
+            switch (_camType)
+            {
+                // 카메라 타입에 따른 카메라 인스턴스 생성
+                case CameraType.WebCam:
+                    {
+                        _grabManager = new WebCam();
+                        break;
+                    }
+                case CameraType.HikRobotCam:
+                    {
+                        _grabManager = new HikRobotCam();
+                        break;
+                    }
+            }
+
+            if (_grabManager != null && _grabManager.InitGrab() == true)
             {
                 _grabManager.TransferCompleted += _multiGrab_TransferCompleted;
 
@@ -73,6 +110,20 @@ namespace sssongVision.Core
 
             //_grabManager.SetExposureTime(25000);
 
+            // 이진화 알고리즘을 속성창에 연동하기 위한 함수 구현            
+            UpdateProperty();
+        }
+
+        private void UpdateProperty()
+        {
+            if (BlobAlgorithm is null)
+                return;
+
+            PropertiesForm propertiesForm = MainForm.GetDockForm<PropertiesForm>();
+            if (propertiesForm is null)
+                return;
+
+            propertiesForm.UpdateProperty(BlobAlgorithm);
         }
 
         public void SetBuffer(int bufferCount)
@@ -113,6 +164,12 @@ namespace sssongVision.Core
             _imageSpace.Split(bufferIndex);
 
             DisplayGrabImage(bufferIndex);
+
+            if (_previewImage != null)
+            {
+                Bitmap bitmap = ImageSpace.GetBitmap(0);
+                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+            }
         }
 
         private void DisplayGrabImage(int bufferIndex)
@@ -151,6 +208,22 @@ namespace sssongVision.Core
                 return null;
 
             return Global.Inst.InspStage.ImageSpace.GetBitmap();
+        }
+
+        // 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
+        public Mat GetMat()
+        {
+            return Global.Inst.InspStage.ImageSpace.GetMat();
+        }
+
+        // 이진화 임계값 변경시, 프리뷰 갱신
+        public void RedrawMainView()
+        {
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.UpdateImageViewer();
+            }
         }
 
         #region Disposable
