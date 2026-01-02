@@ -8,6 +8,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using sssongVision.Algorithm;
+using sssongVision.Core;
 
 namespace sssongVision.UIControl
 {
@@ -29,6 +31,10 @@ namespace sssongVision.UIControl
 
         private float MinZoom = 1.0f;  //최소 줌 제한 값
         private float MaxZoom = 100.0f;  //최대 줌 제한 값
+
+        // 이진화 검사 : 템플릿 매칭 결과 출력을 위해 Rectangle 리스트 변수 설정
+        private List<DrawInspectInfo> _rectInfos = new List<DrawInspectInfo>();
+
 
         public ImageViewCtrl()
         {
@@ -52,6 +58,7 @@ namespace sssongVision.UIControl
             return _bitmapImage;
         }
 
+        // 줌에 따른 좌표 계산 기능 수정
         private void ResizeCanvas()
         {
             if (Width <= 0 || Height <= 0 || _bitmapImage == null) return;
@@ -160,9 +167,102 @@ namespace sssongVision.UIControl
                     g.InterpolationMode = InterpolationMode.NearestNeighbor;
                     g.DrawImage(_bitmapImage, ImageRect);
 
+                    // 이진화 검사 :  _rectInfos 그리기
+                    DrawDiagram(g);
+
                     // 캔버스를 UserControl 화면에 표시
                     e.Graphics.DrawImage(Canvas, 0, 0);
                 }
+            }
+        }
+
+        private void DrawDiagram (Graphics g)
+        {
+            // 이미지 좌표 → 화면 좌표 변환 후 사각형 그리기
+            if (_rectInfos != null)
+            {
+                foreach (DrawInspectInfo rectInfo in _rectInfos)
+                {
+                    Color lineColor = Color.LightCoral;
+                    if (rectInfo.decision == DecisionType.Defect)
+                        lineColor = Color.Red;
+                    else if (rectInfo.decision == DecisionType.Good)
+                        lineColor = Color.LightGreen;
+
+                    Rectangle rect = new Rectangle(rectInfo.rect.X, rectInfo.rect.Y, rectInfo.rect.Width, rectInfo.rect.Height);
+                    Rectangle screenRect = VirtualToScreen(rect);
+
+                    using (Pen pen = new Pen(lineColor, 2))
+                    {
+                        if (rectInfo.UseRotatedRect)
+                        {
+                            PointF[] screenPoints = rectInfo.rotatedPoints
+                                                    .Select(p => VirtualToScreen(new PointF(p.X, p.Y))) // 화면 좌표계로 변환
+                                                    .ToArray();
+
+                            if (screenPoints.Length == 4)
+                            {
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    g.DrawLine(pen, screenPoints[i], screenPoints[(i + 1) % 4]); // 시계방향으로 선 연결
+                                }
+                            }
+                        }
+                        else
+                        {
+                            g.DrawRectangle(pen, screenRect);
+                        }
+                    }
+
+                    if (rectInfo.info != "")
+                    {
+                        float baseFontSize = 20.0f;
+
+                        if (rectInfo.decision == DecisionType.Info)
+                        {
+                            baseFontSize = 3.0f;
+                            lineColor = Color.LightBlue;
+                        }
+
+                        float fontSize = baseFontSize * _curZoom;
+
+                        // 스코어 문자열 그리기 (우상단)
+                        string infoText = rectInfo.info;
+                        PointF textPos = new PointF(screenRect.Left, screenRect.Top); // 위로 약간 띄우기
+
+                        if (rectInfo.inspectType == InspectType.InspBinary
+                            && rectInfo.decision != DecisionType.Info)
+                        {
+                            textPos.Y = screenRect.Bottom - fontSize;
+                        }
+
+                        DrawText(g, infoText, textPos, fontSize, lineColor);
+                    }
+                }
+            }
+        }
+
+        private void DrawText(Graphics g, string text, PointF position, float fontSize, Color color)
+        {
+            using (Font font = new Font("Arial", fontSize, FontStyle.Bold))
+            // 테두리용 검정색 브러시
+            using (Brush outlineBrush = new SolidBrush(Color.Black))
+            // 본문용 노란색 브러시
+            using (Brush textBrush = new SolidBrush(color))
+            {
+                // 테두리 효과를 위해 주변 8방향으로 그리기
+                for (int dx = -1; dx <= 1; dx++)
+                {
+                    for (int dy = -1; dy <= 1; dy++)
+                    {
+                        if (dx == 0 && dy == 0) continue; // 가운데는 제외
+                        PointF borderPos = new PointF(position.X + dx, position.Y + dy);
+                        g.DrawString(text, font, outlineBrush, borderPos);
+                    }
+                }
+
+                // 본문 텍스트
+                g.DrawString(text, font, textBrush, position);
             }
         }
 
@@ -216,6 +316,7 @@ namespace sssongVision.UIControl
         }
 
         // ScreenToVirtual, GetScreenOffset : Virtual <-> Screen 좌표계 변환
+        #region 좌표계 변환
         private PointF ScreenToVirtual(PointF screenPos)
         {
             PointF offset = GetScreenOffset();
@@ -233,6 +334,40 @@ namespace sssongVision.UIControl
             return new PointF(
                 virtualPos.X * _curZoom + offset.X,
                 virtualPos.Y * _curZoom + offset.Y);
+        }
+
+        private Rectangle ScreenToVirtual(Rectangle screenRect)
+        {
+            PointF offset = GetScreenOffset();
+            return new Rectangle(
+                (int)((screenRect.X - offset.X) / _curZoom + 0.5f),
+                (int)((screenRect.Y - offset.Y) / _curZoom + 0.5f),
+                (int)(screenRect.Width / _curZoom + 0.5f),
+                (int)(screenRect.Height / _curZoom + 0.5f));
+        }
+
+        private Rectangle VirtualToScreen(Rectangle virtualRect)
+        {
+            PointF offset = GetScreenOffset();
+            return new Rectangle(
+                (int)(virtualRect.X * _curZoom + offset.X + 0.5f),
+                (int)(virtualRect.Y * _curZoom + offset.Y + 0.5f),
+                (int)(virtualRect.Width * _curZoom + 0.5f),
+                (int)(virtualRect.Height * _curZoom + 0.5f));
+        }
+        #endregion
+
+        // 이진화 검사 : 화면에 보여줄 영역 정보를 표시하기 위해, 위치 입력 받는 함수
+        public void AddRect(List<DrawInspectInfo> rectInfos)
+        {
+            _rectInfos.AddRange(rectInfos);
+            Invalidate();
+        }
+
+        public void ResetEntity()
+        {
+            _rectInfos.Clear();
+            Invalidate();
         }
     }
 }

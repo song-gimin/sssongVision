@@ -23,5 +23,22 @@ namespace sssongVision
         {
             Global.Inst.InspStage.Grab(0);
         }
+
+        // 이진화 검사 :  검사 시작 버튼을 디자인창에서 만들고, 검사 함수 호출
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            Global.Inst.InspStage.TryInspection();
+        }
+
+        // LIVE 모드 버튼 추가
+        private void btnLive_Click(object sender, EventArgs e)
+        {
+            Global.Inst.InspStage.LiveMode = !Global.Inst.InspStage.LiveMode;
+
+            if (Global.Inst.InspStage.LiveMode)
+            {
+                Global.Inst.InspStage.Grab(0);
+            }
+        }
     }
 }

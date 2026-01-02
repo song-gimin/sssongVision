@@ -31,6 +31,10 @@ namespace sssongVision.Algorithm
         // 검사가 완료되었는지 판단
         public bool IsInspected { get; set; } = false;
 
+        // 검사할 영역 정보를 저장하는 변수
+        public Rect TeachRect { get; set; }
+        public Rect InspRect { get; set; }
+
         // 검사할 원본 이미지
         protected Mat _srcImage = null;
 
@@ -39,6 +43,12 @@ namespace sssongVision.Algorithm
 
         // 불량 여부 확인
         public bool IsDefect { get; set; }
+
+        // 검사할 이미지 정보 저장
+        public virtual void SetInspData(Mat srcImage)
+        {
+            _srcImage = srcImage;
+        }
 
         // 검사 함수로, 상속받는 클래스 필수 구현 필요.
         public abstract bool DoInspect();
@@ -49,6 +59,13 @@ namespace sssongVision.Algorithm
             IsInspected = false;
             IsDefect = false;
             ResultString.Clear();
+        }
+
+        // 검사 결과가 Rect정보로 출력이 가능하다면, 이 함수를 상속 받아서, 정보 반환
+        public virtual int GetResultRect(out List<DrawInspectInfo> resultArea)
+        {
+            resultArea = null;
+            return 0;
         }
     }
 }

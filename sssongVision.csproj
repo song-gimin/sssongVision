@@ -56,9 +56,8 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="MvCameraControl.Net, Version=4.5.0.2, Culture=neutral, PublicKeyToken=a3c7c5e3a730cd12, processorArchitecture=AMD64">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\00.ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
+    <Reference Include="MvCameraControl.Net">
+      <HintPath>..\ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
     </Reference>
     <Reference Include="OpenCvSharp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6adad1e807fea099, processorArchitecture=MSIL">
       <HintPath>packages\OpenCvSharp4.4.11.0.20250507\lib\net48\OpenCvSharp.dll</HintPath>
@@ -66,11 +65,13 @@
     <Reference Include="OpenCvSharp.Extensions, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6adad1e807fea099, processorArchitecture=MSIL">
       <HintPath>packages\OpenCvSharp4.Extensions.4.11.0.20250507\lib\net48\OpenCvSharp.Extensions.dll</HintPath>
     </Reference>
-    <Reference Include="SaigeVision.Net.Core.V2">
-      <HintPath>..\00.ExternalLib\Dll\Saige\SaigeVision.Net.Core.V2.dll</HintPath>
+    <Reference Include="SaigeVision.Net.Core.V2, Version=2.5.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ExternalLib\Dll\Saige\SaigeVision.Net.Core.V2.dll</HintPath>
     </Reference>
-    <Reference Include="SaigeVision.Net.V2">
-      <HintPath>..\00.ExternalLib\Dll\Saige\SaigeVision.Net.V2.dll</HintPath>
+    <Reference Include="SaigeVision.Net.V2, Version=2.5.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\ExternalLib\Dll\Saige\SaigeVision.Net.V2.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Buffers, Version=4.0.5.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
@@ -116,6 +117,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Algorithm\BlobAlgorithm.cs" />
+    <Compile Include="Algorithm\DrawInspectInfo.cs" />
     <Compile Include="Algorithm\InspAlgorithm.cs" />
     <Compile Include="CameraForm.cs">
       <SubType>Form</SubType>
@@ -123,6 +125,7 @@
     <Compile Include="CameraForm.Designer.cs">
       <DependentUpon>CameraForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Core\Define.cs" />
     <Compile Include="Core\Global.cs" />
     <Compile Include="Core\ImageSpace.cs" />
     <Compile Include="Core\InspStage.cs" />
@@ -181,6 +184,25 @@
     <Compile Include="RunForm.Designer.cs">
       <DependentUpon>RunForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Setting\CameraSetting.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\CameraSetting.Designer.cs">
+      <DependentUpon>CameraSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\PathSetting.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Setting\PathSetting.Designer.cs">
+      <DependentUpon>PathSetting.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Setting\SettingXml.cs" />
+    <Compile Include="Setting\SetupForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Setting\SetupForm.Designer.cs">
+      <DependentUpon>SetupForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="StatisticForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -200,6 +222,7 @@
       <DependentUpon>RangeTrackbar.cs</DependentUpon>
     </Compile>
     <Compile Include="Util\BitmapExtension.cs" />
+    <Compile Include="Util\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">
       <DependentUpon>CameraForm.cs</DependentUpon>
     </EmbeddedResource>
