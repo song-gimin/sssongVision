@@ -6,6 +6,15 @@ using System.Threading.Tasks;
 
 namespace sssongVision.Core
 {
+    // #10 ROI
+    public enum InspWindowType
+    {
+        None = 0,
+        Base,
+        Body,
+        Sub
+    }
+
     // #8_INSPECT_BINARY# 이진화 검사 구현
     // Define.cs : 프로그램 전체적으로 전역 설정이나, 타입을 정의하기 위한 클래스
     
