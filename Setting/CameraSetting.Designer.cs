@@ -28,10 +28,59 @@
         /// </summary>
         private void InitializeComponent()
         {
-            components = new System.ComponentModel.Container();
+            this.lbCameraType = new System.Windows.Forms.Label();
+            this.btnApply = new System.Windows.Forms.Button();
+            this.cbCameraType = new System.Windows.Forms.ComboBox();
+            this.SuspendLayout();
+            // 
+            // lbCameraType
+            // 
+            this.lbCameraType.AutoSize = true;
+            this.lbCameraType.Font = new System.Drawing.Font("굴림", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
+            this.lbCameraType.Location = new System.Drawing.Point(18, 23);
+            this.lbCameraType.Name = "lbCameraType";
+            this.lbCameraType.Size = new System.Drawing.Size(110, 18);
+            this.lbCameraType.TabIndex = 0;
+            this.lbCameraType.Text = "카메라 종류";
+            // 
+            // btnApply
+            // 
+            this.btnApply.Font = new System.Drawing.Font("굴림", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
+            this.btnApply.Location = new System.Drawing.Point(226, 54);
+            this.btnApply.Name = "btnApply";
+            this.btnApply.Size = new System.Drawing.Size(83, 36);
+            this.btnApply.TabIndex = 2;
+            this.btnApply.Text = "적용";
+            this.btnApply.UseVisualStyleBackColor = true;
+            this.btnApply.Click += new System.EventHandler(this.btnApply_Click);
+            // 
+            // cbCameraType
+            // 
+            this.cbCameraType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbCameraType.FormattingEnabled = true;
+            this.cbCameraType.Location = new System.Drawing.Point(133, 18);
+            this.cbCameraType.Name = "cbCameraType";
+            this.cbCameraType.Size = new System.Drawing.Size(176, 26);
+            this.cbCameraType.TabIndex = 3;
+            // 
+            // CameraSetting
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.cbCameraType);
+            this.Controls.Add(this.btnApply);
+            this.Controls.Add(this.lbCameraType);
+            this.Name = "CameraSetting";
+            this.Size = new System.Drawing.Size(532, 290);
+            this.ResumeLayout(false);
+            this.PerformLayout();
+
         }
 
         #endregion
+
+        private System.Windows.Forms.Label lbCameraType;
+        private System.Windows.Forms.Button btnApply;
+        private System.Windows.Forms.ComboBox cbCameraType;
     }
 }

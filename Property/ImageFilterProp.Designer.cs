@@ -36,9 +36,9 @@
             this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Location = new System.Drawing.Point(16, 14);
-            this.comboBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.comboBox1.Margin = new System.Windows.Forms.Padding(2);
             this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(166, 26);
+            this.comboBox1.Size = new System.Drawing.Size(276, 26);
             this.comboBox1.TabIndex = 0;
             // 
             // ImageFilterProp
@@ -46,9 +46,9 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(10F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.comboBox1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "ImageFilterProp";
-            this.Size = new System.Drawing.Size(462, 450);
+            this.Size = new System.Drawing.Size(405, 450);
             this.ResumeLayout(false);
 
         }

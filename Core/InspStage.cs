@@ -9,6 +9,7 @@ using sssongVision.Inspect;
 using sssongVision.Algorithm;
 using OpenCvSharp.Extensions;
 using OpenCvSharp;
+using sssongVision.Setting;
 
 namespace sssongVision.Core
 {
@@ -66,6 +67,9 @@ namespace sssongVision.Core
             _blobAlgorithm = new BlobAlgorithm();
             _previewImage = new PreviewImage();
 
+            // #9 환경설정 : 설정값 가져오기
+            LoadSetting();
+
             switch (_camType)
             {
                 // 카메라 타입에 따른 카메라 인스턴스 생성
@@ -89,6 +93,12 @@ namespace sssongVision.Core
             }
 
             return true;
+        }
+
+        private void LoadSetting()
+        {
+            //카메라 설정 타입 얻기
+            _camType = SettingXml.Instance.CamType;
         }
 
         public void InitModelGrab(int bufferCount)

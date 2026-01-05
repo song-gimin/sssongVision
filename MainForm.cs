@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
+using sssongVision.Setting;
 
 namespace sssongVision
 {
@@ -36,11 +37,11 @@ namespace sssongVision
 
             // MainForm Tab & DockPanel Tab 안겹치게
             // menuStrip 아래에서 시작하게
-            _dockPanel.Location = new System.Drawing.Point(0, menuStrip1.Height);
-            _dockPanel.Size = new System.Drawing.Size(ClientSize.Width, ClientSize.Height - menuStrip1.Height);
+            _dockPanel.Location = new System.Drawing.Point(0, mainMenu.Height);
+            _dockPanel.Size = new System.Drawing.Size(ClientSize.Width, ClientSize.Height - mainMenu.Height);
             _dockPanel.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
 
-            menuStrip1.BringToFront();  // 혹시 덮어도 메뉴가 앞으로 오게
+            mainMenu.BringToFront();  // 혹시 덮어도 메뉴가 앞으로 오게
 
             // 도킹 창 테마 설정 (어떤 모양으로 띄울건지)
             _dockPanel.Theme = new VS2015BlueTheme();
@@ -134,6 +135,18 @@ namespace sssongVision
                 }
             }
             */
+        }
+
+        // #9 환경설정창 실행
+        private void setupToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            SetupForm setupForm = new SetupForm();
+            setupForm.ShowDialog();
+        }
+
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            Global.Inst.Dispose();
         }
     }
 }

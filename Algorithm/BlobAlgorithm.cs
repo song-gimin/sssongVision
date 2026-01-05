@@ -95,7 +95,7 @@ namespace sssongVision.Algorithm
         public BlobAlgorithm()
         {
             InspectType = InspectType.InspBinary;
-            BinThreshold = new BinaryThreshold(100, 200, false);
+            BinThreshold = new BinaryThreshold(0, 125, false);
         }
 
         // BlobAlgorithm 생성시, 기본 필터 설정

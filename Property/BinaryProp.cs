@@ -56,11 +56,13 @@ namespace sssongVision.Property
             cbBinMethod.DataSource = Enum.GetValues(typeof(BinaryMethod)).Cast<BinaryMethod>().ToList();
             cbBinMethod.SelectedIndex = (int)BinaryMethod.Feature;
 
+            InitializeFilterDataGridView();
+
             // TrackBar 초기 설정
             binRangeTrackbar.RangeChanged += Range_RangeChanged;
 
             binRangeTrackbar.ValueLeft = 0;
-            binRangeTrackbar.ValueRight = 128;
+            binRangeTrackbar.ValueRight = 125;
 
             // 이진화 프리뷰 콤보박스 초기화 설정
             cbHighlight.Items.Add("사용안함");
@@ -219,8 +221,15 @@ namespace sssongVision.Property
 
                 for (int i = 0; i < blobFilters.Count; i++)
                 {
+
+                    if (i >= dataGridViewFilter.Rows.Count)
+                        break;
+
                     BlobFilter blobFilter = blobFilters[i];
-                    blobFilter.isUse = (bool)dataGridViewFilter.Rows[i].Cells[COL_USE].Value;
+
+                    //blobFilter.isUse = (bool)dataGridViewFilter.Rows[i].Cells[COL_USE].Value;
+                    object useVal = dataGridViewFilter.Rows[i].Cells[COL_USE].Value;
+                    blobFilter.isUse = useVal != null && useVal != DBNull.Value && Convert.ToBoolean(useVal);
 
                     object value = dataGridViewFilter.Rows[i].Cells[COL_MIN].Value;
 

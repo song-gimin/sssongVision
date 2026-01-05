@@ -47,23 +47,23 @@
             "CLS",
             "DET",
             "SEG"});
-            this.cbModelType.Location = new System.Drawing.Point(13, 59);
+            this.cbModelType.Location = new System.Drawing.Point(19, 60);
             this.cbModelType.Margin = new System.Windows.Forms.Padding(2);
             this.cbModelType.Name = "cbModelType";
-            this.cbModelType.Size = new System.Drawing.Size(166, 26);
+            this.cbModelType.Size = new System.Drawing.Size(278, 26);
             this.cbModelType.TabIndex = 1;
             this.cbModelType.SelectedIndexChanged += new System.EventHandler(this.cbModelType_SelectedIndexChanged);
             // 
             // txtModelPath
             // 
-            this.txtModelPath.Location = new System.Drawing.Point(13, 158);
+            this.txtModelPath.Location = new System.Drawing.Point(19, 159);
             this.txtModelPath.Name = "txtModelPath";
             this.txtModelPath.Size = new System.Drawing.Size(276, 28);
             this.txtModelPath.TabIndex = 5;
             // 
             // btnSelectModel
             // 
-            this.btnSelectModel.Location = new System.Drawing.Point(13, 101);
+            this.btnSelectModel.Location = new System.Drawing.Point(19, 102);
             this.btnSelectModel.Name = "btnSelectModel";
             this.btnSelectModel.Size = new System.Drawing.Size(85, 45);
             this.btnSelectModel.TabIndex = 6;
@@ -73,7 +73,7 @@
             // 
             // btnInspModel
             // 
-            this.btnInspModel.Location = new System.Drawing.Point(206, 101);
+            this.btnInspModel.Location = new System.Drawing.Point(212, 102);
             this.btnInspModel.Name = "btnInspModel";
             this.btnInspModel.Size = new System.Drawing.Size(85, 45);
             this.btnInspModel.TabIndex = 7;
@@ -83,7 +83,7 @@
             // 
             // numArea
             // 
-            this.numArea.Location = new System.Drawing.Point(77, 208);
+            this.numArea.Location = new System.Drawing.Point(83, 209);
             this.numArea.Name = "numArea";
             this.numArea.Size = new System.Drawing.Size(120, 28);
             this.numArea.TabIndex = 9;
@@ -92,7 +92,7 @@
             // 
             this.labelArea.AutoSize = true;
             this.labelArea.Font = new System.Drawing.Font("굴림", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
-            this.labelArea.Location = new System.Drawing.Point(16, 212);
+            this.labelArea.Location = new System.Drawing.Point(22, 213);
             this.labelArea.Name = "labelArea";
             this.labelArea.Size = new System.Drawing.Size(50, 18);
             this.labelArea.TabIndex = 10;
@@ -100,7 +100,7 @@
             // 
             // btnLoadModel
             // 
-            this.btnLoadModel.Location = new System.Drawing.Point(110, 101);
+            this.btnLoadModel.Location = new System.Drawing.Point(116, 102);
             this.btnLoadModel.Name = "btnLoadModel";
             this.btnLoadModel.Size = new System.Drawing.Size(85, 45);
             this.btnLoadModel.TabIndex = 11;
@@ -112,7 +112,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("굴림", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(129)));
-            this.label1.Location = new System.Drawing.Point(13, 23);
+            this.label1.Location = new System.Drawing.Point(19, 24);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(62, 18);
             this.label1.TabIndex = 12;
