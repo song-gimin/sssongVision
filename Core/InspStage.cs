@@ -10,6 +10,7 @@ using sssongVision.Algorithm;
 using OpenCvSharp.Extensions;
 using OpenCvSharp;
 using sssongVision.Setting;
+using sssongVision.Teach;
 
 namespace sssongVision.Core
 {
@@ -22,11 +23,16 @@ namespace sssongVision.Core
         private GrabModel _grabManager = null;
         private CameraType _camType = CameraType.WebCam;
 
-        SaigeAI _saigeAI;
+        SaigeAI _saigeAI; // SaigeAI 인스턴스
 
-        // 이진화 Preview에 필요한 변수 선언
-        BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
+        //#7_BINARY_PREVIEW#1 이진화 프리뷰에 필요한 변수 선언
         private PreviewImage _previewImage = null;
+        //BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
+
+        //#10_INSPWINDOW#8 모델과 선택된 ROI 윈도우 변수 선언
+        private Model _model = null;
+
+        private InspWindow _selectedInspWindow = null;
 
         public InspStage() { }
 
@@ -46,29 +52,38 @@ namespace sssongVision.Core
         }
 
         // 이진화 알고리즘과 프리뷰 변수에 대한 프로퍼티 생성
-        public BlobAlgorithm BlobAlgorithm
+        /*public BlobAlgorithm BlobAlgorithm
         {
             get => _blobAlgorithm;
-        }
+        }*/
 
         public PreviewImage PreView
         {
             get => _previewImage;
         }
 
-        // LIVE  모드 프로퍼티
+        //#10_INSPWINDOW#9 현재 모델 프로퍼티 생성
+        public Model CurModel
+        {
+            get => _model;
+        }
+
+        //#8_LIVE#1 LIVE 모드 프로퍼티
         public bool LiveMode { get; set; } = false;
 
         public bool Initialize()
         {
             _imageSpace = new ImageSpace();
 
-            // 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
-            _blobAlgorithm = new BlobAlgorithm();
+            //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
             _previewImage = new PreviewImage();
+            //_blobAlgorithm = new BlobAlgorithm();
 
-            // #9 환경설정 : 설정값 가져오기
-            LoadSetting();
+            //#10_INSPWINDOW#10 모델 인스턴스 생성
+            _model = new Model();
+
+            // #9 환경설정 : 설정값 가져오기 *우린 카메라 없이, 이미지 불러와서 작업 할거임
+            // LoadSetting();
 
             switch (_camType)
             {
@@ -123,19 +138,18 @@ namespace sssongVision.Core
             //_grabManager.SetExposureTime(25000);
 
             // 이진화 알고리즘을 속성창에 연동하기 위한 함수 구현            
-            UpdateProperty();
+            //UpdateProperty();
         }
 
-        private void UpdateProperty()
+        // #10_INSPWINDOW#11 속성창 업데이트 기준을 알고리즘(BlobAlgorithm)에서 InspWindow로 변경
+        private void UpdateProperty(InspWindow inspWindow)
         {
-            if (BlobAlgorithm is null)
-                return;
+            if (inspWindow is null) return;
 
             PropertiesForm propertiesForm = MainForm.GetDockForm<PropertiesForm>();
-            if (propertiesForm is null)
-                return;
+            if (propertiesForm is null) return;
 
-            propertiesForm.UpdateProperty(BlobAlgorithm);
+            propertiesForm.UpdateProperty(inspWindow);
         }
 
         public void SetBuffer(int bufferCount)
@@ -159,42 +173,171 @@ namespace sssongVision.Core
             }
         }
 
-        // 이진화 검사 함수
-        public void TryInspection()
+        //#10_INSPWINDOW#12 inspWindow에 대한 검사구현 (기존 BlobAlgorithm에서 InspWindow로 변경)
+        public void TryInspection(InspWindow inspWindow = null)
         {
-            if (_blobAlgorithm is null) return;
-
-            Mat srcImage = Global.Inst.InspStage.GetMat();
-            _blobAlgorithm.SetInspData(srcImage);
-
-            _blobAlgorithm.InspRect = new Rect(0, 0, srcImage.Width, srcImage.Height);
-
-            if (_blobAlgorithm.DoInspect())
+            if (inspWindow is null)
             {
-                DisplayResult();
+                if (_selectedInspWindow is null) return;
+
+                inspWindow = _selectedInspWindow;
+            }
+
+            UpdateDiagramEntity();
+
+            List<DrawInspectInfo> totalArea = new List<DrawInspectInfo>();
+
+            Rect windowArea = inspWindow.WindowArea;
+
+            foreach (var inspAlgo in inspWindow.AlgorithmList)
+            {
+                // 검사 영역 초기화
+                inspAlgo.TeachRect = windowArea;
+                inspAlgo.InspRect = windowArea;
+
+                InspectType inspType = inspAlgo.InspectType;
+
+                switch (inspType)
+                {
+                    case InspectType.InspBinary:
+                        {
+                            BlobAlgorithm blobAlgo = (BlobAlgorithm)inspAlgo;
+
+                            Mat srcImage = Global.Inst.InspStage.GetMat();
+                            blobAlgo.SetInspData(srcImage);
+
+                            if (blobAlgo.DoInspect())
+                            {
+                                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+                                
+                                int resultCnt = blobAlgo.GetResultRect(out resultArea);
+                                
+                                if (resultCnt > 0) totalArea.AddRange(resultArea);
+                            }
+
+                            break;
+                        }
+                }
+
+                if (inspAlgo.DoInspect())
+                {
+                    List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+
+                    int resultCnt = inspAlgo.GetResultRect(out resultArea);
+
+                    if (resultCnt > 0) totalArea.AddRange(resultArea);
+                }
+            }
+
+            if (totalArea.Count > 0)
+            {
+                // 찾은 위치를 이미지상에 표시
+                var cameraForm = MainForm.GetDockForm<CameraForm>();
+                if (cameraForm != null) cameraForm.AddRect(totalArea);
             }
         }
 
-        //검사된 알고리즘이 가지고 있는 검사 결과 정보를 화면에 출력
-        private bool DisplayResult()
+        //#10_INSPWINDOW#13 ImageViewCtrl에서 ROI 생성,수정,이동,선택 등에 대한 함수
+        public void SelectInspWindow(InspWindow inspWindow)
         {
-            if (_blobAlgorithm is null) return false;
+            _selectedInspWindow = inspWindow;
 
-            List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-            int resultCnt = _blobAlgorithm.GetResultRect(out resultArea);
-            if (resultCnt > 0)
+            var propForm = MainForm.GetDockForm<PropertiesForm>();
+            if (propForm != null)
             {
-                //찾은 위치를 이미지상에서 표시
-                var cameraForm = MainForm.GetDockForm<CameraForm>();
-                if (cameraForm != null)
+                if (inspWindow is null)
                 {
-                    cameraForm.ResetDisplay();
-                    cameraForm.AddRect(resultArea);
+                    propForm.ResetProperty();
+                    return;
                 }
+
+                //속성창을 현재 선택된 ROI에 대한 것으로 변경
+                propForm.ShowProperty(inspWindow);
+            }
+
+            UpdateProperty(inspWindow);
+
+            Global.Inst.InspStage.PreView.SetInspWindow(inspWindow);
+        }
+
+        //ImageViwer에서 ROI를 추가하여, InspWindow생성하는 함수
+        public void AddInspWindow(InspWindowType windowType, Rect rect)
+        {
+            InspWindow inspWindow = _model.AddInspWindow(windowType);
+            if (inspWindow is null)
+                return;
+
+            inspWindow.WindowArea = rect;
+            inspWindow.IsTeach = false;
+            UpdateProperty(inspWindow);
+            UpdateDiagramEntity();
+
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SelectDiagramEntity(inspWindow);
+                SelectInspWindow(inspWindow);
+            }
+        }
+
+        public bool AddInspWindow(InspWindow sourceWindow, OpenCvSharp.Point offset)
+        {
+            InspWindow cloneWindow = sourceWindow.Clone(offset);
+            if (cloneWindow is null)
+                return false;
+
+            if (!_model.AddInspWindow(cloneWindow))
+                return false;
+
+            UpdateProperty(cloneWindow);
+            UpdateDiagramEntity();
+
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SelectDiagramEntity(cloneWindow);
+                SelectInspWindow(cloneWindow);
             }
 
             return true;
         }
+
+        //입력된 윈도우 이동
+        public void MoveInspWindow(InspWindow inspWindow, OpenCvSharp.Point offset)
+        {
+            if (inspWindow == null)
+                return;
+
+            inspWindow.OffsetMove(offset);
+            UpdateProperty(inspWindow);
+        }
+
+        //#MODEL#10 기존 ROI 수정되었을때, 그 정보를 InspWindow에 반영
+        public void ModifyInspWindow(InspWindow inspWindow, Rect rect)
+        {
+            if (inspWindow == null)
+                return;
+
+            inspWindow.WindowArea = rect;
+            inspWindow.IsTeach = false;
+
+            UpdateProperty(inspWindow);
+        }
+
+        //#MODEL#11 InspWindow 삭제하기
+        public void DelInspWindow(InspWindow inspWindow)
+        {
+            _model.DelInspWindow(inspWindow);
+            UpdateDiagramEntity();
+        }
+
+
+        public void DelInspWindow(List<InspWindow> inspWindowList)
+        {
+            _model.DelInspWindowList(inspWindowList);
+            UpdateDiagramEntity();
+        }
+
 
         public void Grab(int bufferIndex)
         {
@@ -266,19 +409,35 @@ namespace sssongVision.Core
             return Global.Inst.InspStage.ImageSpace.GetBitmap();
         }
 
-        // 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
+        //#7_BINARY_PREVIEW#4 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
         public Mat GetMat()
         {
             return Global.Inst.InspStage.ImageSpace.GetMat();
         }
 
-        // 이진화 임계값 변경시, 프리뷰 갱신
+        //#7_BINARY_PREVIEW#5 이진화 임계값 변경시, 프리뷰 갱신
         public void RedrawMainView()
         {
             CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
             if (cameraForm != null)
             {
                 cameraForm.UpdateImageViewer();
+            }
+        }
+
+        //#10_INSPWINDOW#14 변경된 모델 정보 갱신하여, ImageViewer와 모델트리에 반영
+        public void UpdateDiagramEntity()
+        {
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.UpdateDiagramEntity();
+            }
+
+            ModelTreeForm modelTreeForm = MainForm.GetDockForm<ModelTreeForm>();
+            if (modelTreeForm != null)
+            {
+                modelTreeForm.UpdateDiagramEntity();
             }
         }
 

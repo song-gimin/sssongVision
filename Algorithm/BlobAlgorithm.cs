@@ -41,7 +41,7 @@ namespace sssongVision.Algorithm
         }
     }
 
-    // 이진화 검사 방법과 Blob Features 정보 정의
+    //#8_INSPECT_BINARY#4 이진화 검사 방법과 Blob Features 정보 정의
     // 이진화 검사 방법 정의
     public enum BinaryMethod : int
     {
@@ -67,7 +67,7 @@ namespace sssongVision.Algorithm
     {
         public BinaryThreshold BinThreshold { get; set; } = new BinaryThreshold();
 
-        // 이진화 검사 : Blob Features 검사를 위한 변수 추가
+        //#8_INSPECT_BINARY#5 Blob Features 검사를 위한 변수 추가
 
         //Blob Features 필터 인덱스 정의
         public readonly int FILTER_AREA = 0;
@@ -98,6 +98,40 @@ namespace sssongVision.Algorithm
             BinThreshold = new BinaryThreshold(0, 125, false);
         }
 
+        //#10_INSPWINDOW#3 InspWindow 복사를 위한 BlobAlgorithm 복사 함수
+        public override InspAlgorithm Clone()
+        {
+            var cloneAlgo = new BlobAlgorithm();
+
+            // 공통 필드 복사
+            this.CopyBaseTo(cloneAlgo);
+
+            cloneAlgo.CopyFrom(this);
+
+            return cloneAlgo;
+        }
+
+        public override bool CopyFrom(InspAlgorithm sourceAlgo)
+        {
+            BlobAlgorithm blobAlgo = (BlobAlgorithm)sourceAlgo;
+
+            this.BinThreshold = blobAlgo.BinThreshold;
+            this.BinMethod = blobAlgo.BinMethod;
+            this.UseRotatedRect = blobAlgo.UseRotatedRect;
+
+            this.BlobFilters = blobAlgo.BlobFilters
+                               .Select(b => new BlobFilter
+                               {
+                                   name = b.name,
+                                   isUse = b.isUse,
+                                   min = b.min,
+                                   max = b.max
+                               })
+                               .ToList();
+
+            return true;
+        }
+
         // BlobAlgorithm 생성시, 기본 필터 설정
         public void SetDefault()
         {
@@ -121,7 +155,7 @@ namespace sssongVision.Algorithm
 
         // InspAlgorithm.cs을 상속받아 구현하고, 인자로 입력받던 것을 부모의 _srcImage 이미지 사용
         // 검사 시작전 IsInspected = false로 초기화하고, 검사가 정상적으로 완료되면 IsInspected = true로 설정
-        // 이진화 검사 알고리즘
+        //#8_INSPECT_BINARY#6 이진화 검사 알고리즘
         public override bool DoInspect()
         {
             ResetResult();
@@ -366,7 +400,7 @@ namespace sssongVision.Algorithm
             return true;
         }
 
-        // 이진화 검사 : 검사 결과 영역 영역 반환
+        //#8_INSPECT_BINARY#7 검사 결과 영역 영역 반환
         public override int GetResultRect(out List<DrawInspectInfo> resultArea)
         {
             resultArea = null;

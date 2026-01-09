@@ -36,6 +36,95 @@ namespace sssongVision.Teach
 
         public List<InspAlgorithm> AlgorithmList { get; set; } = new List<InspAlgorithm>();
 
+        public InspWindow(InspWindowType windowType, string name)
+        {
+            InspWindowType = windowType;
+            Name = name;
+        }
 
+        public InspWindow Clone (OpenCvSharp.Point offset, bool includeChildren = true)
+        {
+            InspWindow cloneWindow = InspWindowFactory.Instance.Create(this.InspWindowType, false);
+            cloneWindow.WindowArea = this.WindowArea + offset;
+            cloneWindow.IsTeach = false;
+
+            foreach (InspAlgorithm algo in AlgorithmList) // 자기 자신에 대한 AltorithmList
+            {
+                var cloneAlgo = algo.Clone();
+                cloneWindow.AlgorithmList.Add(cloneAlgo);  // 복사하는거임 클론 
+            }
+
+            return cloneWindow;
+        }
+
+        // #ABSTRACT ALGORITHM#10 타입에 따라 알고리즘을 추가하는 함수
+        /// 지금은 InspBinary 하나 있지만, 필요에 따라 추가하삼
+        public bool AddInspAlgorithm(InspectType inspType)
+        {
+            InspAlgorithm inspAlgo = null;
+
+            switch (inspType)
+            {
+                case InspectType.InspBinary:
+                    inspAlgo = new BlobAlgorithm();
+                    break;
+            }
+
+            if (inspAlgo is null) return false;
+
+            AlgorithmList.Add(inspAlgo);
+
+            return true;
+        }
+
+        // 알고리즘 리스트로 관리하니까, 필요한 타입의 알고리즘을 찾는 함수
+        public InspAlgorithm FindInspAlgorithm (InspectType inspType)
+        {
+            return AlgorithmList.Find(algo => algo.InspectType == inspType);
+        }
+
+        // 클래스 내에서 인자로 입력된 타입의 알고리즘을 검사하거나, 모든 알고리즘을 검사하는 옵션을 가지는 검사 함수
+        public virtual bool DoInspect (InspectType inspType)
+        {
+            foreach (var inspAlgo in AlgorithmList)
+            {
+                if (inspAlgo.InspectType == inspType || inspType == InspectType.InspNone)
+                {
+                    inspAlgo.DoInspect();
+                }
+            }
+            
+            return true;
+        }
+
+        public bool IsDefect()
+        {
+            foreach (InspAlgorithm algo in AlgorithmList)
+            {
+                if (!algo.IsInspected) continue;
+
+                if (algo.IsDefect) return true;
+            }
+
+            return false;
+        }
+
+        public virtual bool OffsetMove(OpenCvSharp.Point offset)
+        {
+            Rect windowRect = WindowArea;  // ROI 영역 좌표
+            windowRect.X += offset.X;
+            windowRect.Y += offset.Y;
+            WindowArea = windowRect;
+
+            return true;
+        }
+
+        public bool SetInspOffset(OpenCvSharp.Point offset)
+        {
+            InspArea = WindowArea + offset;
+            AlgorithmList.ForEach(algo => algo.InspRect = algo.TeachRect + offset);
+
+            return true;
+        }
     }
 }

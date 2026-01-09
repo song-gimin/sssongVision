@@ -7,12 +7,14 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using sssongVision.Teach;
 
 namespace sssongVision.Core
 {
-    // 이진화 Preview 구현
-    // 이진화 검사를 위한 Preview를 R,G,B,Mono 별로 보여주는 기능 구현
     // PreviewImage.cs : 이진화 Preview를 구현하는 클래스
+
+    // #8 이진화 Preview 구현
+    // 이진화 검사를 위한 Preview를 R,G,B,Mono 별로 보여주는 기능 구현
 
     public class PreviewImage
     {
@@ -20,10 +22,19 @@ namespace sssongVision.Core
         private Mat _previewImage = null;
         private bool _usePreview = true;
 
+        //#10_INSPWINDOW#5 프리뷰를 위한 InspWindow 변수
+        private InspWindow _inspWindow = null;
+
         public void SetImage (Mat image)
         {
             _originalTmage = image;
             _previewImage = new Mat();
+        }
+
+        //#10_INSPWINDOW#6 프리뷰를 위한 InspWindow 설정
+        public void SetInspWindow(InspWindow inspwindow)
+        {
+            _inspWindow = inspwindow;
         }
 
         // ShowBinaryMode에 따라 이진화 Preview 진행 (BinaryProp.cs참고)
@@ -45,6 +56,12 @@ namespace sssongVision.Core
             }
 
             Rect windowArea = new Rect(0, 0, _originalTmage.Width, _originalTmage.Height);
+
+            //#10_INSPWINDOW#7 InspWindow가 있다면 프리뷰 설정 영역을 ROI로 변경
+            if (_inspWindow != null)
+            {
+                windowArea = _inspWindow.WindowArea;
+            }
 
             Mat orgRoi = _originalTmage[windowArea];
 

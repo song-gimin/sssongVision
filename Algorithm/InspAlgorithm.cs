@@ -17,6 +17,8 @@ namespace sssongVision.Algorithm
     {
         InspNone = -1,
         InspBinary,
+        InspFilter,
+        InspAIModule,
         InspCount
     }
 
@@ -44,7 +46,23 @@ namespace sssongVision.Algorithm
         // 불량 여부 확인
         public bool IsDefect { get; set; }
 
-        // 검사할 이미지 정보 저장
+        //#10_INSPWINDOW#2 InspWindow 복사를 위한 InspAlgorithm 복사 함수
+        public abstract InspAlgorithm Clone();
+
+        public abstract bool CopyFrom(InspAlgorithm sourceAlgo);
+
+        // 자식 클래스에서 공통 필드를 복사하려고 부르는 헬퍼
+        protected void CopyBaseTo(InspAlgorithm target)
+        {
+            target.InspectType = this.InspectType;
+            target.IsUse = this.IsUse;
+            target.IsInspected = this.IsInspected;
+            target.TeachRect = this.TeachRect;
+            target.InspRect = this.InspRect;
+            // NOTE: _srcImage 는 런타임 검사용이라 복사하지 않음
+        }
+
+        //#8_INSPECT_BINARY#2 검사할 이미지 정보 저장
         public virtual void SetInspData(Mat srcImage)
         {
             _srcImage = srcImage;
@@ -61,7 +79,7 @@ namespace sssongVision.Algorithm
             ResultString.Clear();
         }
 
-        // 검사 결과가 Rect정보로 출력이 가능하다면, 이 함수를 상속 받아서, 정보 반환
+        //#8_INSPECT_BINARY#3 검사 결과가 Rect정보로 출력이 가능하다면, 이 함수를 상속 받아서, 정보 반환
         public virtual int GetResultRect(out List<DrawInspectInfo> resultArea)
         {
             resultArea = null;

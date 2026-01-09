@@ -1,6 +1,7 @@
 ﻿using sssongVision.Algorithm;
 using sssongVision.Core;
 using sssongVision.Property;
+using sssongVision.Teach;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,13 +16,6 @@ using WeifenLuo.WinFormsUI.Docking;
 
 namespace sssongVision
 {
-    // 속성창에 사용할 타입 선언(여러개가 생길 수 있으니 enum 으로 구분)
-    public enum PropertyType
-    {
-        Binary,
-        Filter,
-        SaigeAI
-    }
     public partial class PropertiesForm : DockContent
     {
         // 속성 탭을 관리하기 위한 딕셔너리
@@ -30,32 +24,28 @@ namespace sssongVision
         public PropertiesForm()
         {
             InitializeComponent();
-
-            // 속성 탭 초기화
-            LoadOptionControl(PropertyType.Binary);
-            LoadOptionControl(PropertyType.Filter);
-            LoadOptionControl(PropertyType.SaigeAI);
         }
 
         // 속성 탭 생성 : 부모변수로 받음
-        private UserControl CreateUserControl(PropertyType propType)
+        // PropertyType에서 InspectType로 변경
+        private UserControl CreateUserControl(InspectType inspPropType)
         {
             UserControl curProp = null;
 
-            switch (propType)
+            switch (inspPropType)
             {
-                case PropertyType.Binary:
+                case InspectType.InspBinary:
                     BinaryProp blobProp = new BinaryProp();
-                    // 이진화 속성 변경시 발생하는 이벤트 추가
+                    //#7_BINARY_PREVIEW#8 이진화 속성 변경시 발생하는 이벤트 추가
                     blobProp.RangeChanged += RangeSlider_RangeChanged;
                     blobProp.PropertyChanged += PropertyChanged;
                     curProp = blobProp;
                     break;
-                case PropertyType.Filter:
+                case InspectType.InspFilter:
                     ImageFilterProp filterProp = new ImageFilterProp();
                     curProp = filterProp;
                     break;
-                case PropertyType.SaigeAI:
+                case InspectType.InspAIModule:
                     SaigeAIProp saigeProp = new SaigeAIProp();
                     curProp = saigeProp;
                     break;
@@ -67,9 +57,10 @@ namespace sssongVision
         }
 
         // 속성 탭이 있다면 반환하고, 없다면 새로 생성하기
-        private void LoadOptionControl(PropertyType propType)
+        // PropertyType에서 InspectType로 변경
+        private void LoadOptionControl(InspectType inspType)
         {
-            string tabName = propType.ToString();
+            string tabName = inspType.ToString();
 
             // 이미 탭이 존재하는지 확인
             foreach (TabPage tabPage in tabPropControl.TabPages)
@@ -85,7 +76,7 @@ namespace sssongVision
             }
 
             // 새로운 UserControl 생성
-            UserControl _inspProp = CreateUserControl(propType);
+            UserControl _inspProp = CreateUserControl(inspType);
             if (_inspProp == null) return; // UserControl 생성이 실패했을 때 방어
 
             // 새로운 tab 생성
@@ -103,10 +94,24 @@ namespace sssongVision
             _allTabs[tabName] = newTab;
         }
 
-        public void UpdateProperty(BlobAlgorithm blobAlgorithm)
+        //#11_MODEL_TREE#3 InspWindow에서 사용하는 알고리즘을 모두 탭에 추가
+        public void ShowProperty(InspWindow window)
         {
-            if (blobAlgorithm is null)
-                return;
+            foreach (InspAlgorithm algo in window.AlgorithmList)
+            {
+                LoadOptionControl(algo.InspectType);
+            }
+        }
+
+        public void ResetProperty()
+        {
+            tabPropControl.TabPages.Clear();
+        }
+
+        // BlobAlgorithm에서 InspWindow로 수정
+        public void UpdateProperty(InspWindow window)
+        {
+            if (window is null) return;
 
             foreach (TabPage tabPage in tabPropControl.TabPages)
             {
@@ -116,13 +121,15 @@ namespace sssongVision
 
                     if (uc is BinaryProp binaryProp)
                     {
-                        binaryProp.SetAlgorithm(blobAlgorithm);
+                        BlobAlgorithm blobAlgo = (BlobAlgorithm)window.FindInspAlgorithm(InspectType.InspBinary);
+                        if (blobAlgo is null) continue;
+                        binaryProp.SetAlgorithm(blobAlgo);
                     }
                 }
             }
         }
 
-        // 이진화 속성 변경시 발생하는 이벤트 구현
+        //#7_BINARY_PREVIEW#7 이진화 속성 변경시 발생하는 이벤트 구현
         private void RangeSlider_RangeChanged(object sender, RangeChangedEventArgs e)
         {
             // 속성값을 이용하여 이진화 임계값 설정

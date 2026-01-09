@@ -64,6 +64,10 @@ namespace sssongVision
             var runForm = new RunForm();
             runForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.2);
 
+            //#11_MODEL_TREE#1 검사 결과창 우측에 40% 비율로 모델트리 추가
+            var modelTreeWindow = new ModelTreeForm();
+            modelTreeWindow.Show(runForm.Pane, DockAlignment.Right, 0.3);
+
             // 검사 결과 창 (카메라 창 아래 30% 비율로 띄우기)
             //var resusltForm = new ResultForm();
             //resusltForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
