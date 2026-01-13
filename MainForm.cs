@@ -12,6 +12,7 @@ using System.Windows;
 using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 using sssongVision.Setting;
+using sssongVision.Teach;
 
 namespace sssongVision
 {
@@ -127,6 +128,77 @@ namespace sssongVision
         private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
         {
             Global.Inst.Dispose();
+        }
+
+        //#12_MODEL SAVE#3 모델 파일 열기,저장, 다른 이름으로 저장 기능 구현
+        private string GetMdoelTitle(Model curModel)
+        {
+            if (curModel is null)
+                return "";
+
+            string modelName = curModel.ModelName;
+            return $"{Define.PROGRAM_NAME} - MODEL : {modelName}";
+        }
+
+        private void modelNewMenuItem_Click(object sender, EventArgs e)
+        {
+            //신규 모델 추가를 위한 모델 정보를 받기 위한 창 띄우기
+            NewModel newModel = new NewModel();
+            newModel.ShowDialog();
+
+            Model curModel = Global.Inst.InspStage.CurModel;
+            if (curModel != null)
+            {
+                this.Text = GetMdoelTitle(curModel);
+            }
+        }
+
+        private void modelOpenMenuItem_Click(object sender, EventArgs e)
+        {
+            //모델 파일 열기
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Title = "모델 파일 선택";
+                openFileDialog.Filter = "Model Files|*.xml;";
+                openFileDialog.Multiselect = false;
+                openFileDialog.InitialDirectory = SettingXml.Instance.ModelDir;
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string filePath = openFileDialog.FileName;
+                    if (Global.Inst.InspStage.LoadModel(filePath))
+                    {
+                        Model curModel = Global.Inst.InspStage.CurModel;
+                        if (curModel != null)
+                        {
+                            this.Text = GetMdoelTitle(curModel);
+                        }
+                    }
+                }
+            }
+        }
+
+        private void modelSaveMenuItem_Click(object sender, EventArgs e)
+        {
+            //모델 파일 저장
+            Global.Inst.InspStage.SaveModel("");
+        }
+
+        private void modelSaveAsMenuItem_Click(object sender, EventArgs e)
+        {
+            //다른이름으로 모델 파일 저장
+            using (SaveFileDialog saveFileDialog = new SaveFileDialog())
+            {
+                saveFileDialog.InitialDirectory = SettingXml.Instance.ModelDir;
+                saveFileDialog.Title = "모델 파일 선택";
+                saveFileDialog.Filter = "Model Files|*.xml;";
+                saveFileDialog.DefaultExt = "xml";
+
+                if (saveFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    string filePath = saveFileDialog.FileName;
+                    Global.Inst.InspStage.SaveModel(filePath);
+                }
+            }
         }
     }
 }

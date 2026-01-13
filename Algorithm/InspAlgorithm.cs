@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
+using sssongVision.Algorithm;
 
 namespace sssongVision.Algorithm
 {
@@ -12,16 +14,10 @@ namespace sssongVision.Algorithm
     // 이진화 검사를 위한 Preview를 R,G,B,Mono 별로 보여주는 기능 구현
     // InspAlgorithm.cs : 검사 알고리즘을 위한 추상화 클래스
 
-    // 검사 알고리즘 타입
-    public enum InspectType
-    {
-        InspNone = -1,
-        InspBinary,
-        InspFilter,
-        InspAIModule,
-        InspCount,
-        InspMatch
-    }
+    //#12_MODEL SAVE#7 Xml Serialize를 위해서, 아래 코드 추가
+    //XmlSerialize는 추상화된 상태를 알수 없어, 상속된 클래스를 명시적으로 포함해야 함.
+    [XmlInclude(typeof(MatchAlgorithm))]
+    [XmlInclude(typeof(BlobAlgorithm))]
 
     public abstract class InspAlgorithm
     {

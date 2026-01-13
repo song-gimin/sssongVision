@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Serialization;
 
 namespace sssongVision.Algorithm
 {
@@ -14,6 +15,8 @@ namespace sssongVision.Algorithm
     // MatchAlgorithm 클래스 생성 및 구현, InspAlgorithm 상속 받기
     public class MatchAlgorithm : InspAlgorithm
     {
+        //#12_MODEL SAVE#8 Xml 이미지는 Serialize 하지 않도록 설정
+        [XmlIgnore]
         private List<Mat> _templateImages = new List<Mat>();
 
         // 찾을 이미지의 매칭율
