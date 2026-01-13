@@ -71,6 +71,11 @@ namespace sssongVision
             imageViewer.LoadBitmap((Bitmap)bitmap);
         }
 
+        public Mat GetDisplayImage()
+        {
+            return Global.Inst.InspStage.ImageSpace.GetMat();
+        }
+
         private void CameraForm_Resize(object sender, EventArgs e)
         {
             int margin = 0;
@@ -97,16 +102,6 @@ namespace sssongVision
             // 이진화 프리뷰에서 각 채널별로 설정이 적용되도록, 현재 이미지를 프리뷰 클래스 설정            
             Mat curImage = Global.Inst.InspStage.GetMat();
             Global.Inst.InspStage.PreView.SetImage(curImage);
-        }
-
-        public Bitmap GetDisplayImage()
-        {
-            Bitmap curImage = null;
-
-            if (imageViewer != null)
-                curImage = imageViewer.GetCurBitmap();
-
-            return curImage;
         }
 
         public void UpdateImageViewer()

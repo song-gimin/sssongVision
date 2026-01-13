@@ -11,6 +11,7 @@ using OpenCvSharp.Extensions;
 using OpenCvSharp;
 using sssongVision.Setting;
 using sssongVision.Teach;
+using System.Runtime.InteropServices;
 
 namespace sssongVision.Core
 {
@@ -70,6 +71,9 @@ namespace sssongVision.Core
 
         //#8_LIVE#1 LIVE 모드 프로퍼티
         public bool LiveMode { get; set; } = false;
+
+        public int SelBufferIndex { get; set; } = 0;
+        public eImageChannel SelImageChannel { get; set; } = eImageChannel.Gray;
 
         public bool Initialize()
         {
@@ -134,11 +138,55 @@ namespace sssongVision.Core
             }
 
             SetBuffer(bufferCount);
+        }
 
-            //_grabManager.SetExposureTime(25000);
+        //#11_MATCHING#10 카메라 촬상 이미지와 파일 이미지 로딩시, 
+        //크기가 다를때, 이미지 버퍼를 다시 설정한 후, 이미지 로딩하는 함수
+        public void SetImageBuffer(string filePath)
+        {
+            Mat matImage = Cv2.ImRead(filePath);
 
-            // 이진화 알고리즘을 속성창에 연동하기 위한 함수 구현            
-            //UpdateProperty();
+            int pixelBpp = 8;
+            int imageWidth;
+            int imageHeight;
+            int imageStride;
+
+            if (matImage.Type() == MatType.CV_8UC3)
+                pixelBpp = 24;
+
+            imageWidth = (matImage.Width + 3) / 4 * 4;
+            imageHeight = matImage.Height;
+
+            // 4바이트 정렬된 새로운 Mat 생성
+            Mat alignedMat = new Mat();
+            Cv2.CopyMakeBorder(matImage, alignedMat, 0, 0, 0, imageWidth - matImage.Width, BorderTypes.Constant, Scalar.Black);
+
+            imageStride = imageWidth * matImage.ElemSize();
+
+            if (_imageSpace != null)
+            {
+                if (_imageSpace.ImageSize.Width != imageWidth || _imageSpace.ImageSize.Height != imageHeight)
+                {
+                    _imageSpace.SetImageInfo(pixelBpp, imageWidth, imageHeight, imageStride);
+                    SetBuffer(_imageSpace.BufferCount);
+                }
+            }
+
+            int bufferIndex = 0;
+
+            // Mat의 데이터를 byte 배열로 복사
+            int bufSize = (int)(alignedMat.Total() * alignedMat.ElemSize());
+            Marshal.Copy(alignedMat.Data, ImageSpace.GetInspectionBuffer(bufferIndex), 0, bufSize);
+
+            _imageSpace.Split(bufferIndex);
+
+            DisplayGrabImage(bufferIndex);
+
+            if (_previewImage != null)
+            {
+                Bitmap bitmap = ImageSpace.GetBitmap(0);
+                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+            }
         }
 
         // #10_INSPWINDOW#11 속성창 업데이트 기준을 알고리즘(BlobAlgorithm)에서 InspWindow로 변경
@@ -152,24 +200,84 @@ namespace sssongVision.Core
             propertiesForm.UpdateProperty(inspWindow);
         }
 
+        //#11_MATCHING#6 패턴매칭 속성창과 연동된 패턴 이미지 관리 함수
+        public void UpdateTeachingImage (int index)
+        {
+            if (_selectedInspWindow is null) return;
+
+            SetTeachingImage(_selectedInspWindow, index);
+        }
+
+        public void SetTeachingImage (InspWindow inspWindow, int index = -1)
+        {
+            if (inspWindow is null) return;
+
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm is null) return;
+
+            Mat curImage = cameraForm.GetDisplayImage();
+            if (curImage is null) return;
+
+            if (inspWindow.WindowArea.Right >= curImage.Width ||
+                inspWindow.WindowArea.Bottom >= curImage.Height)
+            {
+                Console.Write("ROI 영역이 잘못되었습니다!");
+                return;
+            }
+
+            Mat windowImage = curImage[inspWindow.WindowArea];
+
+            if (index < 0)
+            {
+                inspWindow.AddWindowImage(windowImage);
+            }
+            else
+            {
+                inspWindow.SetWindowImage(windowImage, index);
+            }
+
+            inspWindow.IsPatternLearn = false;
+
+            MatchAlgorithm matchAlgo = (MatchAlgorithm)inspWindow.FindInspAlgorithm(InspectType.InspMatch);
+            if (matchAlgo != null)
+            {
+                UpdateProperty(inspWindow);
+            }
+        }
+
+        public void DelTeachingImage(int index)
+        {
+            if (_selectedInspWindow is null) return;
+
+            InspWindow inspWindow = _selectedInspWindow;
+
+            inspWindow.DelWindowImage(index);
+
+            MatchAlgorithm matchAlgo = (MatchAlgorithm)inspWindow.FindInspAlgorithm(InspectType.InspMatch);
+
+            if (matchAlgo != null)
+            {
+                UpdateProperty(inspWindow);
+            }
+        }
+
+        //#11_MATCHING#11 버퍼 재설정시, 항상 설정 되도록 
         public void SetBuffer(int bufferCount)
         {
-            if (_grabManager == null)
-                return;
-
-            if (_imageSpace.BufferCount == bufferCount)
-                return;
-
             _imageSpace.InitImageSpace(bufferCount);
-            _grabManager.InitBuffer(bufferCount);
 
-            for (int i = 0; i < bufferCount; i++)
+            if (_grabManager != null)
             {
-                _grabManager.SetBuffer(
-                    _imageSpace.GetInspectionBuffer(i),
-                    _imageSpace.GetnspectionBufferPtr(i),
-                    _imageSpace.GetInspectionBufferHandle(i),
-                    i);
+                _grabManager.InitBuffer(bufferCount);
+
+                for (int i = 0; i < bufferCount; i++)
+                {
+                    _grabManager.SetBuffer(
+                        _imageSpace.GetInspectionBuffer(i),
+                        _imageSpace.GetnspectionBufferPtr(i),
+                        _imageSpace.GetInspectionBufferHandle(i),
+                        i);
+                }
             }
         }
 
@@ -269,6 +377,9 @@ namespace sssongVision.Core
 
             inspWindow.WindowArea = rect;
             inspWindow.IsTeach = false;
+
+            //#11_MATCHING#7 새로운 ROI가 추가되면, 티칭 이미지 추가
+            SetTeachingImage(inspWindow);
             UpdateProperty(inspWindow);
             UpdateDiagramEntity();
 
@@ -389,18 +500,6 @@ namespace sssongVision.Core
             }
         }
 
-        public Bitmap GetCurrentImage()
-        {
-            Bitmap bitmap = null;
-            var cameraForm = MainForm.GetDockForm<CameraForm>();
-            if (cameraForm != null)
-            {
-                bitmap = cameraForm.GetDisplayImage();
-            }
-
-            return bitmap;
-        }
-
         public Bitmap GetBitmap(int bufferIndex = -1)
         {
             if (Global.Inst.InspStage.ImageSpace is null)
@@ -410,9 +509,16 @@ namespace sssongVision.Core
         }
 
         //#7_BINARY_PREVIEW#4 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
-        public Mat GetMat()
+        public Mat GetMat(int bufferIndex = -1, eImageChannel imageChannel = eImageChannel.None)
         {
-            return Global.Inst.InspStage.ImageSpace.GetMat();
+            if (bufferIndex >= 0)
+                SelBufferIndex = bufferIndex;
+
+            //#BINARY FILTER#14 채널 정보가 유지되도록, eImageChannel.None 타입을 추가
+            if (imageChannel != eImageChannel.None)
+                SelImageChannel = imageChannel;
+
+            return Global.Inst.InspStage.ImageSpace.GetMat(SelBufferIndex, SelImageChannel);
         }
 
         //#7_BINARY_PREVIEW#5 이진화 임계값 변경시, 프리뷰 갱신

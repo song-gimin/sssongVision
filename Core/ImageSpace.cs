@@ -14,12 +14,13 @@ namespace sssongVision.Core
     //검사와 관련된 이미지 버퍼를 관리하는 클래스
     public enum eImageChannel : int
     {
+        None = -1,
         Color,
         Gray,
         Red,
         Green,
         Blue,
-        ChannelCount = 5,
+        ChannelCount,
     }
     public class ImageSpace : IDisposable
     {

@@ -49,6 +49,14 @@ namespace sssongVision
                     SaigeAIProp saigeProp = new SaigeAIProp();
                     curProp = saigeProp;
                     break;
+
+                //#11_MATCHING#5 패턴매칭 속성창 추가
+                case InspectType.InspMatch:
+                    MatchInspProp matchProp = new MatchInspProp();
+                    matchProp.PropertyChanged += PropertyChanged;
+                    curProp = matchProp;
+                    break;
+
                 default:
                     MessageBox.Show("유효하지 않은 옵션입니다.");
                     return null;

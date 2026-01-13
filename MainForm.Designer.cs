@@ -72,7 +72,6 @@
             this.imageSaveToolStripMenuItem.Name = "imageSaveToolStripMenuItem";
             this.imageSaveToolStripMenuItem.Size = new System.Drawing.Size(216, 34);
             this.imageSaveToolStripMenuItem.Text = "Image Save";
-            this.imageSaveToolStripMenuItem.Click += new System.EventHandler(this.imageSaveToolStripMenuItem_Click);
             // 
             // setUpToolStripMenuItem
             // 

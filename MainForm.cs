@@ -109,39 +109,15 @@ namespace sssongVision
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     string filePath = openFileDialog.FileName;
-                    cameraForm.LoadImage(filePath);
+
+                    //#11_MATCHING#12 이미지 로딩함수 변경
+                    Global.Inst.InspStage.SetImageBuffer(filePath);
+                    Global.Inst.InspStage.CurModel.InspectImagePath = filePath;
                 }
             }
         }
 
-        // 이미지 저장
-        private void imageSaveToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            /*CameraForm cameraForm = GetDockForm<CameraForm>();
-   
-            if (cameraForm == null) return;
-
-            // 저장할 이미지가 있는지
-            if (cameraForm.CurMat == null)
-            {
-                MessageBox.Show("저장할 이미지가 없습니다.", "알림", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            using (SaveFileDialog saveDialog = new SaveFileDialog())
-            {
-                saveDialog.Filter = "PNG Image|*.png|JPEG Image|*.jpg|Bitmap Image|*.bmp";
-
-                if (saveDialog.ShowDialog() == DialogResult.OK)
-                {
-                    Cv2.ImWrite(saveDialog.FileName, cameraForm.CurMat);
-                    MessageBox.Show("이미지를 저장했습니다.", "알람");
-                }
-            }
-            */
-        }
-
-        // #9 환경설정창 실행
+        //#9 환경설정창 실행
         private void setupToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             SetupForm setupForm = new SetupForm();

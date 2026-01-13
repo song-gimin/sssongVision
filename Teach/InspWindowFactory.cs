@@ -48,6 +48,8 @@ namespace sssongVision.Teach
             return inspwindow;
         }
 
+
+
         // 타입을 입력하면, 해당 타입의 이름과 UID 이름 반환
         private bool GetWindowName(InspWindowType windowType, out string name, out string prefix)
         {
@@ -75,18 +77,22 @@ namespace sssongVision.Teach
             return true;
         }
 
+        //#11_MATCHING#4 각 ROI에 매칭 알고리즘 추가 (InspMatch)
         private bool AddInspAlgorithm(InspWindow inspWindow)
         {
             switch (inspWindow.InspWindowType)
             {
                 case InspWindowType.Base:
                     inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspBinary);
+                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspMatch);
                     break;
                 case InspWindowType.Body:
                     inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspBinary);
+                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspMatch);
                     break;
                 case InspWindowType.Sub:
                     inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspBinary);
+                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspMatch);
                     break;
             }
 

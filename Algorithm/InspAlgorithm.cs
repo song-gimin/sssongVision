@@ -19,7 +19,8 @@ namespace sssongVision.Algorithm
         InspBinary,
         InspFilter,
         InspAIModule,
-        InspCount
+        InspCount,
+        InspMatch
     }
 
     public abstract class InspAlgorithm
@@ -36,6 +37,8 @@ namespace sssongVision.Algorithm
         // 검사할 영역 정보를 저장하는 변수
         public Rect TeachRect { get; set; }
         public Rect InspRect { get; set; }
+
+        public eImageChannel ImageChannel { get; set; } = eImageChannel.Gray;
 
         // 검사할 원본 이미지
         protected Mat _srcImage = null;
