@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 
 namespace sssongVision.Teach
 {
@@ -83,16 +82,16 @@ namespace sssongVision.Teach
             switch (inspWindow.InspWindowType)
             {
                 case InspWindowType.Base:
-                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspBinary);
-                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspMatch);
+                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
+                    inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     break;
                 case InspWindowType.Body:
-                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspBinary);
-                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspMatch);
+                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
+                    inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     break;
                 case InspWindowType.Sub:
-                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspBinary);
-                    inspWindow.AddInspAlgorithm(Algorithm.InspectType.InspMatch);
+                    inspWindow.AddInspAlgorithm(InspectType.InspBinary);
+                    inspWindow.AddInspAlgorithm(InspectType.InspMatch);
                     break;
             }
 
