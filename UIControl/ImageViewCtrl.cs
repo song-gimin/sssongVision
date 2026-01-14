@@ -141,12 +141,16 @@ namespace sssongVision.UIControl
                 case InspWindowType.Base:
                     color = Color.LightBlue;
                     break;
+				case InspWindowType.Body:
+                    color = Color.Yellow;
+                    break;
                 case InspWindowType.Sub:
                     color = Color.Orange;
                     break;
-                case InspWindowType.Body:
-                    color = Color.Yellow;
+                case InspWindowType.ID:
+                    color = Color.Magenta;
                     break;
+                
             }
 
             return color;
@@ -576,6 +580,8 @@ namespace sssongVision.UIControl
                         _roiRect = entity.EntityROI;
                         _isMovingRoi = true;
                         _moveStart = e.Location;
+
+						UpdateInspParam();
                         break;
                     }
 

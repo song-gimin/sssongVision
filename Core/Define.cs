@@ -25,7 +25,8 @@ namespace sssongVision.Core
         None = 0,
         Base,
         Body,
-        Sub
+        Sub,
+        ID
     }
 
     // #8_INSPECT_BINARY# 이진화 검사 구현

@@ -190,6 +190,9 @@ namespace sssongVision.Core
 
             Dispose();
 
+            _imageByChannel.Clear();
+            _imageInfo.Clear();
+
             Func<int, ImageInfo> newImageInfo = (x) =>
             {
                 var imageInfo = new ImageInfo();

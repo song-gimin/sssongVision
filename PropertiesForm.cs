@@ -26,44 +26,6 @@ namespace sssongVision
             InitializeComponent();
         }
 
-        // 속성 탭 생성 : 부모변수로 받음
-        // PropertyType에서 InspectType로 변경
-        private UserControl CreateUserControl(InspectType inspPropType)
-        {
-            UserControl curProp = null;
-
-            switch (inspPropType)
-            {
-                case InspectType.InspBinary:
-                    BinaryProp blobProp = new BinaryProp();
-                    //#7_BINARY_PREVIEW#8 이진화 속성 변경시 발생하는 이벤트 추가
-                    blobProp.RangeChanged += RangeSlider_RangeChanged;
-                    blobProp.PropertyChanged += PropertyChanged;
-                    curProp = blobProp;
-                    break;
-                case InspectType.InspFilter:
-                    ImageFilterProp filterProp = new ImageFilterProp();
-                    curProp = filterProp;
-                    break;
-                case InspectType.InspAIModule:
-                    SaigeAIProp saigeProp = new SaigeAIProp();
-                    curProp = saigeProp;
-                    break;
-
-                //#11_MATCHING#5 패턴매칭 속성창 추가
-                case InspectType.InspMatch:
-                    MatchInspProp matchProp = new MatchInspProp();
-                    matchProp.PropertyChanged += PropertyChanged;
-                    curProp = matchProp;
-                    break;
-
-                default:
-                    MessageBox.Show("유효하지 않은 옵션입니다.");
-                    return null;
-            }
-            return curProp;
-        }
-
         // 속성 탭이 있다면 반환하고, 없다면 새로 생성하기
         // PropertyType에서 InspectType로 변경
         private void LoadOptionControl(InspectType inspType)
@@ -102,6 +64,42 @@ namespace sssongVision
             _allTabs[tabName] = newTab;
         }
 
+        // 속성 탭 생성 : 부모변수로 받음
+        // PropertyType에서 InspectType로 변경
+        private UserControl CreateUserControl(InspectType inspPropType)
+        {
+            UserControl curProp = null;
+
+            switch (inspPropType)
+            {
+                case InspectType.InspBinary:
+                    BinaryProp blobProp = new BinaryProp();
+                    //#7_BINARY_PREVIEW#8 이진화 속성 변경시 발생하는 이벤트 추가
+                    blobProp.RangeChanged += RangeSlider_RangeChanged;
+                    //blobProp.PropertyChanged += PropertyChanged;
+                    curProp = blobProp;
+                    break;
+                case InspectType.InspFilter:
+                    ImageFilterProp filterProp = new ImageFilterProp();
+                    curProp = filterProp;
+                    break;
+                case InspectType.InspAIModule:
+                    SaigeAIProp saigeProp = new SaigeAIProp();
+                    curProp = saigeProp;
+                    break;
+                //#11_MATCHING#5 패턴매칭 속성창 추가
+                case InspectType.InspMatch:
+                    MatchInspProp matchProp = new MatchInspProp();
+                    matchProp.PropertyChanged += PropertyChanged;
+                    curProp = matchProp;
+                    break;
+                default:
+                    MessageBox.Show("유효하지 않은 옵션입니다.");
+                    return null;
+            }
+            return curProp;
+        }
+
         //#11_MODEL_TREE#3 InspWindow에서 사용하는 알고리즘을 모두 탭에 추가
         public void ShowProperty(InspWindow window)
         {
@@ -130,8 +128,20 @@ namespace sssongVision
                     if (uc is BinaryProp binaryProp)
                     {
                         BlobAlgorithm blobAlgo = (BlobAlgorithm)window.FindInspAlgorithm(InspectType.InspBinary);
-                        if (blobAlgo is null) continue;
+                        if (blobAlgo is null)
+                            continue;
+
                         binaryProp.SetAlgorithm(blobAlgo);
+                    }
+                    else if (uc is MatchInspProp matchProp)
+                    {
+                        MatchAlgorithm matchAlgo = (MatchAlgorithm)window.FindInspAlgorithm(InspectType.InspMatch);
+                        if (matchAlgo is null)
+                            continue;
+
+                        window.PatternLearn();
+
+                        matchProp.SetAlgorithm(matchAlgo);
                     }
                 }
             }

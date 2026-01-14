@@ -194,7 +194,27 @@ namespace sssongVision.Core
             }
         }
 
-        // #10_INSPWINDOW#11 속성창 업데이트 기준을 알고리즘(BlobAlgorithm)에서 InspWindow로 변경
+        public void CheckImageBuffer()
+        {
+            if (_grabManager != null && SettingXml.Instance.CamType != CameraType.None)
+            {
+                int imageWidth;
+                int imageHeight;
+                int imageStride;
+                _grabManager.GetResolution(out imageWidth, out imageHeight, out imageStride);
+
+                if (_imageSpace.ImageSize.Width != imageWidth || _imageSpace.ImageSize.Height != imageHeight)
+                {
+                    int pixelBpp = 8;
+                    _grabManager.GetPixelBpp(out pixelBpp);
+
+                    _imageSpace.SetImageInfo(pixelBpp, imageWidth, imageHeight, imageStride);
+                    SetBuffer(_imageSpace.BufferCount);
+                }
+            }
+        }
+
+        //#10_INSPWINDOW#11 속성창 업데이트 기준을 알고리즘(BlobAlgorithm)에서 InspWindow로 변경
         private void UpdateProperty(InspWindow inspWindow)
         {
             if (inspWindow is null) return;

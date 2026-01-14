@@ -22,6 +22,7 @@ namespace sssongVision.Teach
 
         public string InspectImagePath { get; set; } = ""; // EyeVision 처럼 시뮬레이터를 만드는거니까,, 이미지 가져올 경로 (현재는 카메라가 없으니께)
 
+        [XmlElement("InspWindow")]
         public List<InspWindow> InspWindowList { get; set; }
 
         public Model()
@@ -62,7 +63,7 @@ namespace sssongVision.Teach
             int before = InspWindowList.Count;
             InspWindowList.RemoveAll(w => inspWindowList.Contains(w));
 
-            return inspWindowList.Count < before;
+            return InspWindowList.Count < before;
         }
 
         // 신규 모델 생성

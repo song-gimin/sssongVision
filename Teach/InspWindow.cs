@@ -95,6 +95,10 @@ namespace sssongVision.Teach
             InspWindow cloneWindow = InspWindowFactory.Instance.Create(this.InspWindowType, false);
             cloneWindow.WindowArea = this.WindowArea + offset;
             cloneWindow.IsTeach = false;
+            cloneWindow.IsPatternLearn = false;
+
+            foreach (var img in _windowImages.ToList())
+                cloneWindow._windowImages.Add(img?.Clone());
 
             foreach (InspAlgorithm algo in AlgorithmList) // 자기 자신에 대한 AltorithmList
             {
