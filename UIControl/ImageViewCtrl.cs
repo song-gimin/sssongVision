@@ -191,6 +191,8 @@ namespace sssongVision.UIControl
 
         private void FitImageToScreen()
         {
+            if (_bitmapImage is null) return;
+
             RecalcZoomRatio();
 
             float NewWidth = _bitmapImage.Width * _curZoom;
@@ -234,12 +236,20 @@ namespace sssongVision.UIControl
         // 이미지 로딩
         public void LoadBitmap(Bitmap bitmap)
         {
+            //#15_INSP_WORKER#9 스레드에서 검사시, 멈추는 현상 방지
+            if (this.InvokeRequired)
+            {
+                this.BeginInvoke(new Action<Bitmap>(LoadBitmap), bitmap);
+                return;
+            }
+
             // 기존에 로드된 이미지가 있다면 해제 후 초기화, 메모리누수 방지
             if (_bitmapImage != null)
             {
                 // 이미지 크기가 같다면, 이미지 변경 후, 화면 갱신
                 if (_bitmapImage.Width == bitmap.Width && _bitmapImage.Height == bitmap.Height)
                 {
+                    _bitmapImage.Dispose();   // 기존 이미지 해제 후 교체
                     _bitmapImage = bitmap;
                     Invalidate();
                     return;

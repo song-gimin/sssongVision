@@ -39,6 +39,8 @@
             this.imageSaveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setUpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.setupToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.inspectToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cycleModeMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mainMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -48,7 +50,8 @@
             this.mainMenu.ImageScalingSize = new System.Drawing.Size(32, 32);
             this.mainMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
-            this.setUpToolStripMenuItem});
+            this.setUpToolStripMenuItem,
+            this.inspectToolStripMenuItem});
             this.mainMenu.Location = new System.Drawing.Point(0, 0);
             this.mainMenu.Name = "mainMenu";
             this.mainMenu.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
@@ -127,9 +130,24 @@
             // setupToolStripMenuItem1
             // 
             this.setupToolStripMenuItem1.Name = "setupToolStripMenuItem1";
-            this.setupToolStripMenuItem1.Size = new System.Drawing.Size(161, 34);
+            this.setupToolStripMenuItem1.Size = new System.Drawing.Size(270, 34);
             this.setupToolStripMenuItem1.Text = "Setup";
             this.setupToolStripMenuItem1.Click += new System.EventHandler(this.setupToolStripMenuItem1_Click);
+            // 
+            // inspectToolStripMenuItem
+            // 
+            this.inspectToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.cycleModeMenuItem});
+            this.inspectToolStripMenuItem.Name = "inspectToolStripMenuItem";
+            this.inspectToolStripMenuItem.Size = new System.Drawing.Size(87, 29);
+            this.inspectToolStripMenuItem.Text = "Inspect";
+            // 
+            // cycleModeMenuItem
+            // 
+            this.cycleModeMenuItem.Name = "cycleModeMenuItem";
+            this.cycleModeMenuItem.Size = new System.Drawing.Size(270, 34);
+            this.cycleModeMenuItem.Text = "Cycle Mode";
+            this.cycleModeMenuItem.Click += new System.EventHandler(this.cycleModeMenuItem_Click);
             // 
             // MainForm
             // 
@@ -162,6 +180,8 @@
         private System.Windows.Forms.ToolStripMenuItem modelSaveMenuItem;
         private System.Windows.Forms.ToolStripMenuItem modelSaveAsMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
+        private System.Windows.Forms.ToolStripMenuItem inspectToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cycleModeMenuItem;
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿using sssongVision.Core;
+using sssongVision.Setting;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,13 +22,27 @@ namespace sssongVision
 
         private void btnGrab_Click(object sender, EventArgs e)
         {
+            //그랩시 이미지 버퍼를 먼저 설정하도록 변경
+            Global.Inst.InspStage.CheckImageBuffer();
             Global.Inst.InspStage.Grab(0);
         }
 
         // 이진화 검사 :  검사 시작 버튼을 디자인창에서 만들고, 검사 함수 호출
         private void btnStart_Click(object sender, EventArgs e)
         {
-            Global.Inst.InspStage.TryInspection();
+            //#15_INSP_WORKER#10 카메라 타입에 따라 자동 검사 모드 설정
+            string serialID = $"{DateTime.Now:MM-dd HH:mm:ss}";
+            Global.Inst.InspStage.InspectReady("LOT_NUMBER", serialID);
+
+            if (SettingXml.Instance.CamType == Grab.CameraType.None)
+            {
+                bool cycleMode = SettingXml.Instance.CycleMode;
+                Global.Inst.InspStage.CycleInspect(cycleMode);
+            }
+            else
+            {
+                Global.Inst.InspStage.StartAutoRun();
+            }
         }
 
         // LIVE 모드 버튼 추가
@@ -37,6 +52,8 @@ namespace sssongVision
 
             if (Global.Inst.InspStage.LiveMode)
             {
+                //그랩시 이미지 버퍼를 먼저 설정하도록 변경
+                Global.Inst.InspStage.CheckImageBuffer();
                 Global.Inst.InspStage.Grab(0);
             }
         }

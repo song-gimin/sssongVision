@@ -53,26 +53,32 @@ namespace sssongVision
 
             //전역 인스턴스 초기화
             Global.Inst.InspStage.Initialize();
+
+            //#15_INSP_WORKER#2 연속 검사 모드 설정값 로딩
+            LoadSetting();
         }
 
         // 도킹 윈도우를 로드하는 메서드 생성 (private)
         private void LoadDockingWindows()
         {
+            // 도킹해제 금지 설정
+            _dockPanel.AllowEndUserDocking = false;
+
             // 카메라 창
             var cameraForm = new CameraForm();
             cameraForm.Show(_dockPanel, DockState.Document); //도킹에 쓰려면 붙이는 애들도 도킹화 시켜야함. CameraForm.cs 상속 바꿔주기
 
-            // 카메라 실행 창 (촬상)
-            var runForm = new RunForm();
-            runForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.2);
-
-            //#11_MODEL_TREE#1 검사 결과창 우측에 40% 비율로 모델트리 추가
-            var modelTreeWindow = new ModelTreeForm();
-            modelTreeWindow.Show(runForm.Pane, DockAlignment.Right, 0.3);
-
             //#13_INSP_RESULT#7 검사 결과창 30% 비율로 추가
             var resusltForm = new ResultForm();
             resusltForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
+
+            //#11_MODEL_TREE#1 검사 결과창 우측에 40% 비율로 모델트리 추가
+            var modelTreeWindow = new ModelTreeForm();
+            modelTreeWindow.Show(resusltForm.Pane, DockAlignment.Right, 0.4);
+
+            // 카메라 실행 창 (촬상)
+            var runForm = new RunForm();
+            runForm.Show(modelTreeWindow.Pane, null);
 
             // 속성 창 (오른쪽에 창 띄우기)
             var propForm = new PropertiesForm();
@@ -85,6 +91,10 @@ namespace sssongVision
             // 속성창에 statistic 창 추가
             //var statisticForm = new StatisticForm();
             //statisticForm.Show(_dockPanel, DockState.DockRight);
+        }
+        private void LoadSetting()
+        {
+            cycleModeMenuItem.Checked = SettingXml.Instance.CycleMode;
         }
 
         // 도킹패널에 쉽게 접근하기 위한 정적 함수
@@ -200,6 +210,14 @@ namespace sssongVision
                     Global.Inst.InspStage.SaveModel(filePath);
                 }
             }
+        }
+
+        //#15_INSP_WORKER#3 Cycle 모드 설정
+        private void cycleModeMenuItem_Click(object sender, EventArgs e)
+        {
+            // 현재 체크 상태 확인
+            bool isChecked = cycleModeMenuItem.Checked;
+            SettingXml.Instance.CycleMode = isChecked;
         }
     }
 }

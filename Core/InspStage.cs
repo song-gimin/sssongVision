@@ -15,6 +15,7 @@ using System.Runtime.InteropServices;
 using System.IO;
 using sssongVision.Util;
 using System.Security.RightsManagement;
+using System.Windows.Forms;
 
 namespace sssongVision.Core
 {
@@ -37,6 +38,14 @@ namespace sssongVision.Core
         private Model _model = null;
 
         private InspWindow _selectedInspWindow = null;
+
+        //#15_INSP_WORKER#5 InspWorker 클래스 선언
+        private InspWorker _inspWorker = null;
+        private ImageLoader _imageLoader = null;
+        public bool UseCamera { get; set; } = false;
+
+        private string _lotNumber;
+        private string _serialID;
 
         public InspStage() { }
 
@@ -66,6 +75,12 @@ namespace sssongVision.Core
             get => _previewImage;
         }
 
+        //#15_INSP_WORKER#6 InspWorker 프로퍼티
+        public InspWorker InspWorker
+        {
+            get => _inspWorker;
+        }
+
         //#10_INSPWINDOW#9 현재 모델 프로퍼티 생성
         public Model CurModel
         {
@@ -86,6 +101,10 @@ namespace sssongVision.Core
             //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
             _previewImage = new PreviewImage();
             //_blobAlgorithm = new BlobAlgorithm();
+
+            //#15_INSP_WORKER#7 InspWorker 인스턴스 생성
+            _inspWorker = new InspWorker();
+            _imageLoader = new ImageLoader();
 
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
@@ -310,91 +329,11 @@ namespace sssongVision.Core
 
         //#10_INSPWINDOW#12 inspWindow에 대한 검사구현 (기존 BlobAlgorithm에서 InspWindow로 변경)
         //#13_INSP_RESULT#8 검사 결과를 출력하기 위해, 코드 수정
+        //#15_INSP_WORKER#8 TryInspection를 InspWorker로 이동
         public void TryInspection(InspWindow inspWindow = null)
         {
-            if (inspWindow is null)
-            {
-                if (_selectedInspWindow is null) return;
-
-                inspWindow = _selectedInspWindow;
-            }
-
             UpdateDiagramEntity();
-
-            inspWindow.ResetInspResult();
-
-            List<DrawInspectInfo> totalArea = new List<DrawInspectInfo>();
-
-            Rect windowArea = inspWindow.WindowArea;
-
-            foreach (var inspAlgo in inspWindow.AlgorithmList)
-            {
-                if (!inspAlgo.IsUse) continue;
-
-                // 검사 영역 초기화
-                inspAlgo.TeachRect = windowArea;
-                inspAlgo.InspRect = windowArea;
-
-                Mat srcImage = Global.Inst.InspStage.GetMat();
-                inspAlgo.SetInspData(srcImage);
-
-                if (!inspAlgo.DoInspect()) continue;
-
-                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-                int resultCnt = inspAlgo.GetResultRect(out resultArea);
-                if (resultCnt > 0)
-                {
-                    totalArea.AddRange(resultArea);
-                }
-
-                InspectType inspType = inspAlgo.InspectType;
-
-                string resultInfo = string.Join("\r\n", inspAlgo.ResultString);
-
-                InspResult inspResult = new InspResult
-                {
-                    ObjectID = inspWindow.UID,
-                    InspType = inspAlgo.InspectType,
-                    IsDefect = inspAlgo.IsDefect,
-                    ResultInfos = resultInfo
-                };
-
-                switch (inspType)
-                {
-                    case InspectType.InspBinary:
-                        {
-                            BlobAlgorithm blobAlgo = (BlobAlgorithm)inspAlgo;
-                            int min = blobAlgo.BlobFilters[blobAlgo.FILTER_COUNT].min;
-                            int max = blobAlgo.BlobFilters[blobAlgo.FILTER_COUNT].max;
-                            inspResult.ResultValue = $"{blobAlgo.OutBlobCount}/{min}~{max}";
-                            break;
-                        }
-                    case InspectType.InspMatch:
-                        {
-                            MatchAlgorithm matchAlgo = inspAlgo as MatchAlgorithm;
-                            inspResult.ResultValue = $"{matchAlgo.OutScore}";
-                            break;
-                        }
-                }
-
-                inspWindow.AddInspResult(inspResult);
-            }
-
-            if (totalArea.Count > 0)
-            {
-                // 찾은 위치를 이미지상에 표시
-                var cameraForm = MainForm.GetDockForm<CameraForm>();
-                if (cameraForm != null)
-                {
-                    cameraForm.AddRect(totalArea);
-                }
-            }
-
-            ResultForm resultForm = MainForm.GetDockForm<ResultForm>();
-            if (resultForm != null)
-            {
-                resultForm.AddWindowResult(inspWindow);
-            }
+            InspWorker.TryInspect(inspWindow, InspectType.InspNone);
         }
 
         //#10_INSPWINDOW#13 ImageViewCtrl에서 ROI 생성,수정,이동,선택 등에 대한 함수
@@ -502,11 +441,15 @@ namespace sssongVision.Core
         }
 
 
-        public void Grab(int bufferIndex)
+        public bool Grab(int bufferIndex)
         {
-            if (_grabManager == null) return;
+            if (_grabManager == null)
+                return false;
 
-            _grabManager.Grab(bufferIndex, true);
+            if (!_grabManager.Grab(bufferIndex, true))
+                return false;
+
+            return true;
         }
 
         //영상 취득 완료 이벤트 발생시 후처리
@@ -584,6 +527,15 @@ namespace sssongVision.Core
             }
         }
 
+        public void ResetDisplay()
+        {
+            CameraForm cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.ResetDisplay();
+            }
+        }
+
         //#10_INSPWINDOW#14 변경된 모델 정보 갱신하여, ImageViewer와 모델트리에 반영
         public void UpdateDiagramEntity()
         {
@@ -633,6 +585,117 @@ namespace sssongVision.Core
                 Global.Inst.InspStage.CurModel.Save();
             else
                 Global.Inst.InspStage.CurModel.SaveAs(filePath);
+        }
+
+        //#15_INSP_WORKER#9 자동 연속 검사 함수
+        public void CycleInspect(bool isCycle)
+        {
+            if (InspWorker.IsRunning) return;
+
+            if (!UseCamera)
+            {
+                string inspImagePath = CurModel.InspectImagePath;
+                if (inspImagePath == "") return;
+
+                string inspImageDir = Path.GetDirectoryName(inspImagePath);
+                if (!Directory.Exists(inspImageDir)) return;
+
+                if (!_imageLoader.IsLoadedImages())
+                    _imageLoader.LoadImages(inspImageDir);
+            }
+
+            if (isCycle)
+            {
+                _inspWorker.StartCycleInspectImage();
+            }
+            else
+            {
+                OneCycle();
+            }
+        }
+        public bool OneCycle()
+        {
+            if (UseCamera)
+            {
+                if (!Grab(0))
+                    return false;
+            }
+            else
+            {
+                if (!VirtualGrab())
+                    return false;
+            }
+
+            ResetDisplay();
+
+            bool isDefect;
+            if (!_inspWorker.RunInspect(out isDefect))
+                return false;
+
+            return true;
+        }
+
+        public bool VirtualGrab()
+        {
+            if (_imageLoader is null)
+                return false;
+
+            string imagePath = _imageLoader.GetNextImagePath();
+            if (imagePath == "")
+                return false;
+
+            Global.Inst.InspStage.SetImageBuffer(imagePath);
+
+            _imageSpace.Split(0);
+
+            DisplayGrabImage(0);
+
+            return true;
+        }
+
+        public void StopCycle()
+        {
+            if (_inspWorker != null)
+                _inspWorker.Stop();
+
+            //#17_WORKING_STATE 내용 (SetWorkingState)
+            //SetWorkingState(WorkingState.NONE);
+        }
+
+        public bool InspectReady(string lotNumber, string serialID)
+        {
+            _lotNumber = lotNumber;
+            _serialID = serialID;
+
+            LiveMode = false;
+            UseCamera = SettingXml.Instance.CamType != CameraType.None ? true : false;
+
+            Global.Inst.InspStage.CheckImageBuffer();
+
+            ResetDisplay();
+
+            return true;
+        }
+
+        public bool StartAutoRun()
+        {
+            SLogger.Write("Action : StartAutoRun");
+
+            string modelPath = CurModel.ModelPath;
+            if (modelPath == "")
+            {
+                SLogger.Write("열려진 모델이 없습니다!", SLogger.LogType.Error);
+                MessageBox.Show("열려진 모델이 없습니다!");
+                return false;
+            }
+
+            LiveMode = false;
+            UseCamera = SettingXml.Instance.CamType != CameraType.None ? true : false;
+
+            //#17_WORKING_STATE 내용 (SetWorkingState)
+            //SetWorkingState(WorkingState.INSPECT);
+
+            return true;
         }
 
         #region Disposable

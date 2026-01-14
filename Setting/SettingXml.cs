@@ -94,5 +94,8 @@ namespace sssongVision.Setting
         public string ImageDir { get; set; } = "";
 
         public CameraType CamType { get; set; } = CameraType.WebCam;
+
+        //#15_INSP_WORKER#1 연속 검사 모드
+        public bool CycleMode { get; set; } = false;
     }
 }

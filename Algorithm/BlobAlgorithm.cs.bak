@@ -95,7 +95,7 @@ namespace sssongVision.Algorithm
         public BlobAlgorithm()
         {
             InspectType = InspectType.InspBinary;
-            BinThreshold = new BinaryThreshold(100, 200, false);
+            BinThreshold = new BinaryThreshold(0, 125, false);
         }
 
         //#10_INSPWINDOW#3 InspWindow 복사를 위한 BlobAlgorithm 복사 함수
@@ -176,7 +176,7 @@ namespace sssongVision.Algorithm
             else
             {
             	grayImage = targetImage;    	
-            }
+        ````}
 
             // 이진화 처리
             Mat binaryImage = new Mat();
@@ -385,11 +385,6 @@ namespace sssongVision.Algorithm
                     IsDefect = true;
 
                 if (IsDefect == false && countFilter.max > 0 && findBlobCount > countFilter.max)
-                    IsDefect = true;
-            }
-            else
-            {
-                if (_findArea.Count > 0)
                     IsDefect = true;
             }
 
