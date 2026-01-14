@@ -57,5 +57,10 @@ namespace sssongVision
                 Global.Inst.InspStage.Grab(0);
             }
         }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            Global.Inst.InspStage.StopCycle();
+        }
     }
 }
