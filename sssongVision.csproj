@@ -56,6 +56,9 @@
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="log4net">
+      <HintPath>..\00.ExternalLib\Dll\Log4Net\log4net.dll</HintPath>
+    </Reference>
     <Reference Include="MvCameraControl.Net">
       <HintPath>..\ExternalLib\Dll\HikRobot\MvCameraControl.Net.dll</HintPath>
     </Reference>
@@ -255,9 +258,13 @@
       <DependentUpon>RangeTrackbar.cs</DependentUpon>
     </Compile>
     <Compile Include="Util\BitmapExtension.cs" />
+    <Compile Include="Util\SLogger.cs" />
     <Compile Include="Util\XmlHelper.cs" />
     <EmbeddedResource Include="CameraForm.resx">
       <DependentUpon>CameraForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="LogForm.resx">
+      <DependentUpon>LogForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="MainForm.resx">
       <DependentUpon>MainForm.cs</DependentUpon>
@@ -310,6 +317,9 @@
     <EmbeddedResource Include="UIControl\PatternImageEditor.resx">
       <DependentUpon>PatternImageEditor.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="log4net.config">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>

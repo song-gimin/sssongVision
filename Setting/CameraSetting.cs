@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using sssongVision.Grab;
+using sssongVision.Util;
 
 namespace sssongVision.Setting
 {
@@ -50,6 +51,8 @@ namespace sssongVision.Setting
             SettingXml.Instance.CamType = (CameraType)cbCameraType.SelectedIndex;
             //환경설정 저장
             SettingXml.Save();
+
+            SLogger.Write($"카메라 설정 저장");
         }
 
         private void btnApply_Click(object sender, EventArgs e)

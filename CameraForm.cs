@@ -4,6 +4,7 @@ using sssongVision.Algorithm;
 using sssongVision.Core;
 using sssongVision.Teach;
 using sssongVision.UIControl;
+using sssongVision.Util;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -30,6 +31,7 @@ namespace sssongVision
 
         private void ImageViewer_DiagramEntityEvent(object sender, DiagramEntityEventArgs e)
         {
+            SLogger.Write($"ImageViewer Action {e.ActionType.ToString()}");
             switch (e.ActionType)
             {
                 case EntityActionType.Select:
@@ -158,6 +160,12 @@ namespace sssongVision
         public void AddRoi(InspWindowType inspWindowType)
         {
             imageViewer.NewRoi(inspWindowType);
+        }
+
+        //#13_INSP_RESULT#6 검사 양불판정 갯수 설정 함수
+        public void SetInspResultCount(int totalArea, int okCnt, int ngCnt)
+        {
+            imageViewer.SetInspResultCount(new InspectResultCount(totalArea, okCnt, ngCnt));
         }
     }
 }

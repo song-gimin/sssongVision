@@ -13,6 +13,8 @@ using sssongVision.Setting;
 using sssongVision.Teach;
 using System.Runtime.InteropServices;
 using System.IO;
+using sssongVision.Util;
+using System.Security.RightsManagement;
 
 namespace sssongVision.Core
 {
@@ -78,6 +80,7 @@ namespace sssongVision.Core
 
         public bool Initialize()
         {
+            SLogger.Write("InspStage 초기화!");
             _imageSpace = new ImageSpace();
 
             //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
@@ -145,6 +148,7 @@ namespace sssongVision.Core
         //크기가 다를때, 이미지 버퍼를 다시 설정한 후, 이미지 로딩하는 함수
         public void SetImageBuffer(string filePath)
         {
+            SLogger.Write($"Load Image : {filePath}");
             Mat matImage = Cv2.ImRead(filePath);
 
             int pixelBpp = 8;
@@ -222,7 +226,7 @@ namespace sssongVision.Core
             if (inspWindow.WindowArea.Right >= curImage.Width ||
                 inspWindow.WindowArea.Bottom >= curImage.Height)
             {
-                Console.Write("ROI 영역이 잘못되었습니다!");
+                SLogger.Write("ROI 영역이 잘못되었습니다!");
                 return;
             }
 
@@ -280,9 +284,12 @@ namespace sssongVision.Core
                         i);
                 }
             }
+
+            SLogger.Write("버퍼 초기화 성공!");
         }
 
         //#10_INSPWINDOW#12 inspWindow에 대한 검사구현 (기존 BlobAlgorithm에서 InspWindow로 변경)
+        //#13_INSP_RESULT#8 검사 결과를 출력하기 위해, 코드 수정
         public void TryInspection(InspWindow inspWindow = null)
         {
             if (inspWindow is null)
@@ -294,55 +301,79 @@ namespace sssongVision.Core
 
             UpdateDiagramEntity();
 
+            inspWindow.ResetInspResult();
+
             List<DrawInspectInfo> totalArea = new List<DrawInspectInfo>();
 
             Rect windowArea = inspWindow.WindowArea;
 
             foreach (var inspAlgo in inspWindow.AlgorithmList)
             {
+                if (!inspAlgo.IsUse) continue;
+
                 // 검사 영역 초기화
                 inspAlgo.TeachRect = windowArea;
                 inspAlgo.InspRect = windowArea;
 
+                Mat srcImage = Global.Inst.InspStage.GetMat();
+                inspAlgo.SetInspData(srcImage);
+
+                if (!inspAlgo.DoInspect()) continue;
+
+                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
+                int resultCnt = inspAlgo.GetResultRect(out resultArea);
+                if (resultCnt > 0)
+                {
+                    totalArea.AddRange(resultArea);
+                }
+
                 InspectType inspType = inspAlgo.InspectType;
+
+                string resultInfo = string.Join("\r\n", inspAlgo.ResultString);
+
+                InspResult inspResult = new InspResult
+                {
+                    ObjectID = inspWindow.UID,
+                    InspType = inspAlgo.InspectType,
+                    IsDefect = inspAlgo.IsDefect,
+                    ResultInfos = resultInfo
+                };
 
                 switch (inspType)
                 {
                     case InspectType.InspBinary:
                         {
                             BlobAlgorithm blobAlgo = (BlobAlgorithm)inspAlgo;
-
-                            Mat srcImage = Global.Inst.InspStage.GetMat();
-                            blobAlgo.SetInspData(srcImage);
-
-                            if (blobAlgo.DoInspect())
-                            {
-                                List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-                                
-                                int resultCnt = blobAlgo.GetResultRect(out resultArea);
-                                
-                                if (resultCnt > 0) totalArea.AddRange(resultArea);
-                            }
-
+                            int min = blobAlgo.BlobFilters[blobAlgo.FILTER_COUNT].min;
+                            int max = blobAlgo.BlobFilters[blobAlgo.FILTER_COUNT].max;
+                            inspResult.ResultValue = $"{blobAlgo.OutBlobCount}/{min}~{max}";
+                            break;
+                        }
+                    case InspectType.InspMatch:
+                        {
+                            MatchAlgorithm matchAlgo = inspAlgo as MatchAlgorithm;
+                            inspResult.ResultValue = $"{matchAlgo.OutScore}";
                             break;
                         }
                 }
 
-                if (inspAlgo.DoInspect())
-                {
-                    List<DrawInspectInfo> resultArea = new List<DrawInspectInfo>();
-
-                    int resultCnt = inspAlgo.GetResultRect(out resultArea);
-
-                    if (resultCnt > 0) totalArea.AddRange(resultArea);
-                }
+                inspWindow.AddInspResult(inspResult);
             }
 
             if (totalArea.Count > 0)
             {
                 // 찾은 위치를 이미지상에 표시
                 var cameraForm = MainForm.GetDockForm<CameraForm>();
-                if (cameraForm != null) cameraForm.AddRect(totalArea);
+                if (cameraForm != null)
+                {
+                    cameraForm.AddRect(totalArea);
+                }
+            }
+
+            ResultForm resultForm = MainForm.GetDockForm<ResultForm>();
+            if (resultForm != null)
+            {
+                resultForm.AddWindowResult(inspWindow);
             }
         }
 
@@ -462,7 +493,7 @@ namespace sssongVision.Core
         private async void _multiGrab_TransferCompleted(object sender, object e)
         {
             int bufferIndex = (int)e;
-            Console.WriteLine($"_multiGrab_TransferCompleted {bufferIndex}");
+            SLogger.Write($"_multiGrab_TransferCompleted {bufferIndex}");
 
             _imageSpace.Split(bufferIndex);
 
@@ -478,6 +509,7 @@ namespace sssongVision.Core
             //이 함수는 await를 사용하여 비동기적으로 실행되어, 함수를 async로 선언해야 합니다.
             if (LiveMode)
             {
+                SLogger.Write("Grab");
                 await Task.Delay(100);  // 비동기 대기
                 _grabManager.Grab(bufferIndex, true);  // 다음 촬영 시작
             }
@@ -551,13 +583,13 @@ namespace sssongVision.Core
         //#12_MODEL SAVE#4 Mainform에서 호출되는 모델 열기와 저장 함수  
         public bool LoadModel(string filePath)
         {
-            Console.Write($"모델 로딩:{filePath}");
+            SLogger.Write($"모델 로딩:{filePath}");
 
             _model = _model.Load(filePath);
 
             if (_model is null)
             {
-                Console.Write($"모델 로딩 실패:{filePath}");
+                SLogger.Write($"모델 로딩 실패:{filePath}");
                 return false;
             }
 
@@ -574,7 +606,7 @@ namespace sssongVision.Core
 
         public void SaveModel(string filePath)
         {
-            Console.Write($"모델 저장:{filePath}");
+            SLogger.Write($"모델 저장:{filePath}");
 
             //입력 경로가 없으면 현재 모델 저장
             if (string.IsNullOrEmpty(filePath))

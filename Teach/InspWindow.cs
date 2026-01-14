@@ -8,6 +8,7 @@ using OpenCvSharp;
 using System.IO;
 using System.Xml.Serialization;
 using sssongVision.Core;
+using sssongVision.Inspect;
 
 namespace sssongVision.Teach
 {
@@ -34,12 +35,17 @@ namespace sssongVision.Teach
 
         public bool IsTeach { get; set; } = false;
 
-              
-        [XmlElement("InspAlgorithm")] //#12_MODEL SAVE#5 Xml Serialize를 위해서, Element을 명확하게 알려줘야 함
+        //#12_MODEL SAVE#5 Xml Serialize를 위해서, Element을 명확하게 알려줘야 함
+        [XmlElement("InspAlgorithm")]
         public List<InspAlgorithm> AlgorithmList { get; set; } = new List<InspAlgorithm>();
 
-        [XmlIgnore] //#12_MODEL SAVE#6 Xml Serialize를 하지 않도록 설정
-        public List<Mat> _windowImages = new List<Mat>(); //#11_MATCHING#1 패턴매칭에 필요한 티칭 이미지 관리 기능
+        //#13_INSP_RESULT#1 검사 결과를 저장하기 위한 리스트
+        public List<InspResult> InspResultList { get; set; } = new List<InspResult>();
+
+        //#12_MODEL SAVE#6 Xml Serialize를 하지 않도록 설정
+        [XmlIgnore]
+        //#11_MATCHING#1 패턴매칭에 필요한 티칭 이미지 관리 기능
+        public List<Mat> _windowImages = new List<Mat>();
 
         public void AddWindowImage (Mat image)
         {
@@ -73,6 +79,10 @@ namespace sssongVision.Teach
         }
 
         public bool IsPatternLearn { get; set; } = false;
+
+        public InspWindow()
+        {
+        }
 
         public InspWindow(InspWindowType windowType, string name)
         {
@@ -266,6 +276,22 @@ namespace sssongVision.Teach
             }
 
             return true;
+        }
+
+        //#13_INSP_RESULT#2 검사 결과를 초기화 및 추가 함수
+        public void ResetInspResult()
+        {
+            foreach (var algorithm in AlgorithmList)
+            {
+                algorithm.ResetResult();
+            }
+
+            InspResultList.Clear();
+        }
+
+        public void AddInspResult(InspResult inspResult)
+        {
+            InspResultList.Add(inspResult);
         }
     }
 }

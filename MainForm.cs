@@ -13,6 +13,7 @@ using System.Windows.Forms;
 using WeifenLuo.WinFormsUI.Docking;
 using sssongVision.Setting;
 using sssongVision.Teach;
+using sssongVision.Util;
 
 namespace sssongVision
 {
@@ -69,22 +70,21 @@ namespace sssongVision
             var modelTreeWindow = new ModelTreeForm();
             modelTreeWindow.Show(runForm.Pane, DockAlignment.Right, 0.3);
 
-            // 검사 결과 창 (카메라 창 아래 30% 비율로 띄우기)
-            //var resusltForm = new ResultForm();
-            //resusltForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
+            //#13_INSP_RESULT#7 검사 결과창 30% 비율로 추가
+            var resusltForm = new ResultForm();
+            resusltForm.Show(cameraForm.Pane, DockAlignment.Bottom, 0.3);
 
             // 속성 창 (오른쪽에 창 띄우기)
             var propForm = new PropertiesForm();
             propForm.Show(_dockPanel, DockState.DockRight);
 
+            //#14_LOGFORM#2 로그창 (우측 속성 창 만든 영역 아래에 50% 비율로 띄우기)
+            var logForm = new LogForm();
+            logForm.Show(propForm.Pane, DockAlignment.Bottom, 0.3);
+
             // 속성창에 statistic 창 추가
             //var statisticForm = new StatisticForm();
             //statisticForm.Show(_dockPanel, DockState.DockRight);
-
-            // 로그 창 (우측 속성 창 만든 영역 아래에 50% 비율로 띄우기)
-            //var logForm = new LogForm();
-            //logForm.Show(propForm.Pane, DockAlignment.Bottom, 0.5);  //위로 띄우고 싶으면 Top 사용하셈~
-
         }
 
         // 도킹패널에 쉽게 접근하기 위한 정적 함수
@@ -121,6 +121,7 @@ namespace sssongVision
         //#9 환경설정창 실행
         private void setupToolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            SLogger.Write($"환경설정창 열기");
             SetupForm setupForm = new SetupForm();
             setupForm.ShowDialog();
         }
