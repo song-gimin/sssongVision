@@ -201,7 +201,6 @@ namespace sssongVision.UIControl
             // UserControl 너비에서 이미지 너비를 뺀 후, 절반을 왼쪽 여백으로 설정하여 중앙 정렬
             ImageRect = new RectangleF((Width - NewWidth) / 2, (Height - NewHeight) / 2, NewWidth, NewHeight);
 
-            ResizeCanvas();
             Invalidate(); // 화면 갱신
         }
 

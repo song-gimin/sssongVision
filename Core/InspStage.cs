@@ -549,7 +549,7 @@ namespace sssongVision.Core
             if (bufferIndex >= 0)
                 SelBufferIndex = bufferIndex;
 
-            return Global.Inst.InspStage.ImageSpace.GetMat(SelBufferIndex, SelImageChannel);
+            return Global.Inst.InspStage.ImageSpace.GetMat(SelBufferIndex, imageChannel);
         }
 
         //#7_BINARY_PREVIEW#5 이진화 임계값 변경시, 프리뷰 갱신

@@ -52,7 +52,7 @@ namespace sssongVision
             // 새로운 tab 생성
             TabPage newTab = new TabPage(tabName)
             {
-                Dock = DockStyle.Fill,
+                Dock = DockStyle.Fill
             };
 
             _inspProp.Dock = DockStyle.Fill;

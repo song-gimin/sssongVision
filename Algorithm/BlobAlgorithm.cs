@@ -95,7 +95,7 @@ namespace sssongVision.Algorithm
         public BlobAlgorithm()
         {
             InspectType = InspectType.InspBinary;
-            BinThreshold = new BinaryThreshold(100, 200, false);
+            BinThreshold = new BinaryThreshold(0, 150, false);
         }
 
         //#10_INSPWINDOW#3 InspWindow 복사를 위한 BlobAlgorithm 복사 함수
