@@ -64,13 +64,10 @@ namespace sssongVision.UIControl
         private float _zoomFactor = 1.1f;  //줌 배율 변경 시, 확대/축소 단위
 
         private float MinZoom = 1.0f;  //최소 줌 제한 값
-        private const float MaxZoom = 100.0f;  //최대 줌 제한 값
+        private float MaxZoom = 100.0f;  //최대 줌 제한 값
 
         //#8_INSPECT_BINARY#15 템플릿 매칭 결과 출력을 위해 Rectangle 리스트 변수 설정
         private List<DrawInspectInfo> _rectInfos = new List<DrawInspectInfo>();
-
-        //#17_WORKING_STATE#3 작업 상태 변수
-        public string WorkingState { get; set; } = "";
 
         //#13_INSP_RESULT#4 검사 양불 판정 갯수를 화면에 표시하기 위한 변수
         private InspectResultCount _inspectResultCount = new InspectResultCount();
@@ -110,7 +107,7 @@ namespace sssongVision.UIControl
         //팝업 메뉴
         private ContextMenuStrip _contextMenu;
 
-        private readonly object _lock = new object();
+		private readonly object _lock = new object();
         public ImageViewCtrl()
         {
             InitializeComponent();
@@ -145,7 +142,7 @@ namespace sssongVision.UIControl
                 case InspWindowType.Base:
                     color = Color.LightBlue;
                     break;
-                case InspWindowType.Body:
+				case InspWindowType.Body:
                     color = Color.Yellow;
                     break;
                 case InspWindowType.Sub:
@@ -154,7 +151,7 @@ namespace sssongVision.UIControl
                 case InspWindowType.ID:
                     color = Color.Magenta;
                     break;
-
+                
             }
 
             return color;
@@ -167,6 +164,11 @@ namespace sssongVision.UIControl
             _selColor = GetWindowColor(inspWindowType);
             Cursor = Cursors.Cross;
         }
+
+        /*public Bitmap GetCurBitmap()
+        {
+            return _bitmapImage;
+        }*/
 
         // 줌에 따른 좌표 계산 기능 수정
         private void ResizeCanvas()
@@ -215,7 +217,6 @@ namespace sssongVision.UIControl
             float aspectRatio = (float)imageSize.Height / imageSize.Width;
             float clientAspect = (float)Height / (float)Width;
 
-            //UserControl과 이미지의 비율의 관계를 통해, 이미지가 UserControl안에 들어가도록 Zoom비율 설정
             float ratio;
             if (aspectRatio <= clientAspect)
             {
@@ -226,15 +227,11 @@ namespace sssongVision.UIControl
                 ratio = (float)Height / (float)imageSize.Height;
             }
 
-            //최소 줌 비율은 이미지가 UserControl에 꽉차게 들어가는 것으로 설정
             float minZoom = ratio;
 
-            // MinZoom 및 줌 적용
             MinZoom = minZoom;
 
             _curZoom = Math.Max(MinZoom, Math.Min(MaxZoom, ratio));
-
-            Invalidate();
         }
 
         // 이미지 로딩
@@ -391,18 +388,67 @@ namespace sssongVision.UIControl
                 }
             }
 
-            lock (_lock)
+            // 이미지 좌표 → 화면 좌표 변환 후 사각형 그리기
+            if (_rectInfos != null)
             {
-                DrawRectInfo(g);
-            }
+                foreach (DrawInspectInfo rectInfo in _rectInfos)
+                {
+                    Color lineColor = Color.LightCoral;
+                    if (rectInfo.decision == DecisionType.Defect)
+                        lineColor = Color.Red;
+                    else if (rectInfo.decision == DecisionType.Good)
+                        lineColor = Color.LightGreen;
 
-            //#17_WORKING_STATE#4 작업 상태 화면에 표시
-            if (WorkingState != "")
-            {
-                float fontSize = 20.0f;
-                Color stateColor = Color.FromArgb(255, 128, 0);
-                PointF textPos = new PointF(10, 10);
-                DrawText(g, WorkingState, textPos, fontSize, stateColor);
+                    Rectangle rect = new Rectangle(rectInfo.rect.X, rectInfo.rect.Y, rectInfo.rect.Width, rectInfo.rect.Height);
+                    Rectangle screenRect = VirtualToScreen(rect);
+
+                    using (Pen pen = new Pen(lineColor, 2))
+                    {
+                        if (rectInfo.UseRotatedRect)
+                        {
+                            PointF[] screenPoints = rectInfo.rotatedPoints
+                                                    .Select(p => VirtualToScreen(new PointF(p.X, p.Y))) // 화면 좌표계로 변환
+                                                    .ToArray();
+
+                            if (screenPoints.Length == 4)
+                            {
+                                for (int i = 0; i < 4; i++)
+                                {
+                                    g.DrawLine(pen, screenPoints[i], screenPoints[(i + 1) % 4]); // 시계방향으로 선 연결
+                                }
+                            }
+                        }
+                        else
+                        {
+                            g.DrawRectangle(pen, screenRect);
+                        }
+                    }
+
+                    if (rectInfo.info != "")
+                    {
+                        float baseFontSize = 20.0f;
+
+                        if (rectInfo.decision == DecisionType.Info)
+                        {
+                            baseFontSize = 3.0f;
+                            lineColor = Color.LightBlue;
+                        }
+
+                        float fontSize = baseFontSize * _curZoom;
+
+                        // 스코어 문자열 그리기 (우상단)
+                        string infoText = rectInfo.info;
+                        PointF textPos = new PointF(screenRect.Left, screenRect.Top); // 위로 약간 띄우기
+
+                        if (rectInfo.inspectType == InspectType.InspBinary
+                            && rectInfo.decision != DecisionType.Info)
+                        {
+                            textPos.Y = screenRect.Bottom - fontSize;
+                        }
+
+                        DrawText(g, infoText, textPos, fontSize, lineColor);
+                    }
+                }
             }
 
             //#13_INSP_RESULT#5 검사 양불판정 갯수 화면에 표시
@@ -414,71 +460,6 @@ namespace sssongVision.UIControl
                 Color resultColor = Color.FromArgb(255, 255, 255);
                 PointF textPos = new PointF(Width - 80, 10);
                 DrawText(g, resultText, textPos, fontSize, resultColor);
-            }
-        }
-        private void DrawRectInfo(Graphics g)
-        {
-            if (_rectInfos == null || _rectInfos.Count <= 0)
-                return;
-
-            // 이미지 좌표 → 화면 좌표 변환 후 사각형 그리기
-            foreach (DrawInspectInfo rectInfo in _rectInfos)
-            {
-                Color lineColor = Color.LightCoral;
-                if (rectInfo.decision == DecisionType.Defect)
-                    lineColor = Color.Red;
-                else if (rectInfo.decision == DecisionType.Good)
-                    lineColor = Color.LightGreen;
-
-                Rectangle rect = new Rectangle(rectInfo.rect.X, rectInfo.rect.Y, rectInfo.rect.Width, rectInfo.rect.Height);
-                Rectangle screenRect = VirtualToScreen(rect);
-
-                using (Pen pen = new Pen(lineColor, 2))
-                {
-                    if (rectInfo.UseRotatedRect)
-                    {
-                        PointF[] screenPoints = rectInfo.rotatedPoints
-                                                .Select(p => VirtualToScreen(new PointF(p.X, p.Y))) // 화면 좌표계로 변환
-                                                .ToArray();
-
-                        if (screenPoints.Length == 4)
-                        {
-                            for (int i = 0; i < 4; i++)
-                            {
-                                g.DrawLine(pen, screenPoints[i], screenPoints[(i + 1) % 4]); // 시계방향으로 선 연결
-                            }
-                        }
-                    }
-                    else
-                    {
-                        g.DrawRectangle(pen, screenRect);
-                    }
-                }
-
-                if (rectInfo.info != "")
-                {
-                    float baseFontSize = 20.0f;
-
-                    if (rectInfo.decision == DecisionType.Info)
-                    {
-                        baseFontSize = 3.0f;
-                        lineColor = Color.LightBlue;
-                    }
-
-                    float fontSize = baseFontSize * _curZoom;
-
-                    // 스코어 문자열 그리기 (우상단)
-                    string infoText = rectInfo.info;
-                    PointF textPos = new PointF(screenRect.Left, screenRect.Top); // 위로 약간 띄우기
-
-                    if (rectInfo.inspectType == InspectType.InspBinary
-                        && rectInfo.decision != DecisionType.Info)
-                    {
-                        textPos.Y = screenRect.Bottom - fontSize;
-                    }
-
-                    DrawText(g, infoText, textPos, fontSize, lineColor);
-                }
             }
         }
 
@@ -611,7 +592,7 @@ namespace sssongVision.UIControl
                         _isMovingRoi = true;
                         _moveStart = e.Location;
 
-                        UpdateInspParam();
+						UpdateInspParam();
                         break;
                     }
 
@@ -1030,11 +1011,8 @@ namespace sssongVision.UIControl
         // 이진화 검사 : 화면에 보여줄 영역 정보를 표시하기 위해, 위치 입력 받는 함수
         public void AddRect(List<DrawInspectInfo> rectInfos)
         {
-            lock (_lock)
-            {
-                _rectInfos.AddRange(rectInfos);
-                Invalidate();
-            }
+            _rectInfos.AddRange(rectInfos);
+            Invalidate();
         }
 
         public void SetInspResultCount(InspectResultCount inspectResultCount)
@@ -1125,10 +1103,7 @@ namespace sssongVision.UIControl
 
         public void ResetEntity()
         {
-            lock (_lock)
-            {
-                _rectInfos.Clear();
-            }
+            _rectInfos.Clear();
             Invalidate();
         }
 

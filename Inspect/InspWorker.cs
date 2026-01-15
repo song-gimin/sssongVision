@@ -38,8 +38,7 @@ namespace sssongVision.Inspect
 
         public void InspectionLoop(InspWorker inspWorker, CancellationToken token)
         {
-            //#17_WORKING_STATE 내용 (SetWorkingState)
-            //Global.Inst.InspStage.SetWorkingState(WorkingState.INSPECT);
+            Global.Inst.InspStage.SetWorkingState(WorkingState.INSPECT);
 
             SLogger.Write("InspectionLoop Start");
 

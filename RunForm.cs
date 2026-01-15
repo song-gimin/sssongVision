@@ -22,7 +22,7 @@ namespace sssongVision
 
         private void btnGrab_Click(object sender, EventArgs e)
         {
-            //그랩시 이미지 버퍼를 먼저 설정하도록 변경
+            //#13_SET_IMAGE_BUFFER#3 그랩시 이미지 버퍼를 먼저 설정하도록 변경
             Global.Inst.InspStage.CheckImageBuffer();
             Global.Inst.InspStage.Grab(0);
         }
@@ -50,11 +50,18 @@ namespace sssongVision
         {
             Global.Inst.InspStage.LiveMode = !Global.Inst.InspStage.LiveMode;
 
+            //#17_WORKING_STATE#6 LIVE 상태 화면 표시
             if (Global.Inst.InspStage.LiveMode)
             {
-                //그랩시 이미지 버퍼를 먼저 설정하도록 변경
+                Global.Inst.InspStage.SetWorkingState(WorkingState.LIVE);
+
+                //#13_SET_IMAGE_BUFFER#4 그랩시 이미지 버퍼를 먼저 설정하도록 변경
                 Global.Inst.InspStage.CheckImageBuffer();
                 Global.Inst.InspStage.Grab(0);
+            }
+            else
+            {
+                Global.Inst.InspStage.SetWorkingState(WorkingState.NONE);
             }
         }
 

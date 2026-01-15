@@ -40,6 +40,15 @@ namespace sssongVision.Core
         Timeout         //타임아웃
     }
 
+    //#17_WORKING_STATE#1 작업 상태 정의
+    public enum WorkingState
+    {
+        NONE = 0,
+        INSPECT,
+        LIVE,
+        ALARM
+    }
+
     internal class Define
     {
         //# SAVE ROI#4 전역적으로, ROI 저장 파일명을 설정

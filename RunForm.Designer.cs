@@ -74,7 +74,7 @@
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(92, 60);
             this.btnStop.TabIndex = 3;
-            this.btnStop.Text = "검사정지";
+            this.btnStop.Text = "검사중지";
             this.btnStop.UseVisualStyleBackColor = true;
             this.btnStop.Click += new System.EventHandler(this.btnStop_Click);
             // 

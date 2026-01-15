@@ -119,9 +119,9 @@ namespace sssongVision
                 openFileDialog.Multiselect = false;
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    string filePath = openFileDialog.FileName;
-
                     //#11_MATCHING#12 이미지 로딩함수 변경
+                    //#13_SET_IMAGE_BUFFER#2 이미지에 맞게 버퍼를 먼저 설정하도록 변경
+                    string filePath = openFileDialog.FileName;
                     Global.Inst.InspStage.SetImageBuffer(filePath);
                     Global.Inst.InspStage.CurModel.InspectImagePath = filePath;
                 }

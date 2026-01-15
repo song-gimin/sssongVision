@@ -16,15 +16,20 @@ using System.IO;
 using sssongVision.Util;
 using System.Security.RightsManagement;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace sssongVision.Core
 {
-    //비전검사를 위한 클래스 구현
+    //#6_INSP_STAGE - 비전검사를 위한 클래스 구현
+    //#16_LAST_MODELOPEN# - 마지막에 사용한 모델 파일 자동 로딩
+    //#17_WORKING_STATE# - 현재 운영 상태를 화면에 표시
+
     public class InspStage : IDisposable
     {
         public static readonly int MAX_GRAB_BUF = 5;
 
         private ImageSpace _imageSpace = null;
+
         private GrabModel _grabManager = null;
         private CameraType _camType = CameraType.WebCam;
 
@@ -32,7 +37,6 @@ namespace sssongVision.Core
 
         //#7_BINARY_PREVIEW#1 이진화 프리뷰에 필요한 변수 선언
         private PreviewImage _previewImage = null;
-        //BlobAlgorithm _blobAlgorithm = null; // Blob 알고리즘 인스턴스
 
         //#10_INSPWINDOW#8 모델과 선택된 ROI 윈도우 변수 선언
         private Model _model = null;
@@ -42,6 +46,13 @@ namespace sssongVision.Core
         //#15_INSP_WORKER#5 InspWorker 클래스 선언
         private InspWorker _inspWorker = null;
         private ImageLoader _imageLoader = null;
+
+        //#16_LAST_MODELOPEN#1 가장 최근 모델 파일 경로와 저장할 REGISTRY 키 변수 선언
+        //레지스트리 키 생성 or 열기
+        RegistryKey _regKey = null;
+        //가장 최근 모델 파일 경로를 저장하는 변수 생성
+        private bool _lastestModelOpen = false;
+
         public bool UseCamera { get; set; } = false;
 
         private string _lotNumber;
@@ -63,12 +74,6 @@ namespace sssongVision.Core
                 return _saigeAI;
             }
         }
-
-        // 이진화 알고리즘과 프리뷰 변수에 대한 프로퍼티 생성
-        /*public BlobAlgorithm BlobAlgorithm
-        {
-            get => _blobAlgorithm;
-        }*/
 
         public PreviewImage PreView
         {
@@ -100,17 +105,16 @@ namespace sssongVision.Core
 
             //#7_BINARY_PREVIEW#3 이진화 알고리즘과 프리뷰 변수 인스턴스 생성
             _previewImage = new PreviewImage();
-            //_blobAlgorithm = new BlobAlgorithm();
 
             //#15_INSP_WORKER#7 InspWorker 인스턴스 생성
             _inspWorker = new InspWorker();
             _imageLoader = new ImageLoader();
 
+            //#16_LAST_MODELOPEN#2 REGISTRY 키 생성
+            _regKey = Registry.CurrentUser.CreateSubKey("Software\\sssongVision");
+
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
-
-            // #9 환경설정 : 설정값 가져오기 *우린 카메라 없이, 이미지 불러와서 작업 할거임
-            // LoadSetting();
 
             switch (_camType)
             {
@@ -132,6 +136,12 @@ namespace sssongVision.Core
                 _grabManager.TransferCompleted += _multiGrab_TransferCompleted;
 
                 InitModelGrab(MAX_GRAB_BUF);
+            }
+
+            //#16_LAST_MODELOPEN#5 마지막 모델 열기 여부 확인
+            if (!LastestModelOpen())
+            {
+                MessageBox.Show("모델 열기 실패!");
             }
 
             return true;
@@ -165,6 +175,8 @@ namespace sssongVision.Core
 
         //#11_MATCHING#10 카메라 촬상 이미지와 파일 이미지 로딩시, 
         //크기가 다를때, 이미지 버퍼를 다시 설정한 후, 이미지 로딩하는 함수
+        //#13_SET_IMAGE_BUFFER# - 이미지 크기에 맞는 버퍼 설정 
+        //이미지 파일을 열거나, 카메라를 사용할 때, 다른 해상도일 때 버퍼 처리
         public void SetImageBuffer(string filePath)
         {
             SLogger.Write($"Load Image : {filePath}");
@@ -205,12 +217,6 @@ namespace sssongVision.Core
             _imageSpace.Split(bufferIndex);
 
             DisplayGrabImage(bufferIndex);
-
-            if (_previewImage != null)
-            {
-                Bitmap bitmap = ImageSpace.GetBitmap(0);
-                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
-            }
         }
 
         public void CheckImageBuffer()
@@ -305,7 +311,8 @@ namespace sssongVision.Core
             }
         }
 
-        //#11_MATCHING#11 버퍼 재설정시, 항상 설정 되도록 
+        //#11_MATCHING#11 버퍼 재설정시, 항상 설정 되도록
+        //#13_SET_IMAGE_BUFFER#1 InitImageSpace를 먼저 실행하도록 수정
         public void SetBuffer(int bufferCount)
         {
             _imageSpace.InitImageSpace(bufferCount);
@@ -462,12 +469,6 @@ namespace sssongVision.Core
 
             DisplayGrabImage(bufferIndex);
 
-            if (_previewImage != null)
-            {
-                Bitmap bitmap = ImageSpace.GetBitmap(0);
-                _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
-            }
-
             // LIVE 모드일때, Grab을 계속 실행하여 반복되도록 구현
             //이 함수는 await를 사용하여 비동기적으로 실행되어, 함수를 async로 선언해야 합니다.
             if (LiveMode)
@@ -496,12 +497,20 @@ namespace sssongVision.Core
             }
         }
 
-        public Bitmap GetBitmap(int bufferIndex = -1)
+        //비트맵 이미지 요청시, 이미지 채널이 있다면 SelImageChangel에 설정
+        public Bitmap GetBitmap(int bufferIndex = -1, eImageChannel imageChannel = eImageChannel.None)
         {
+            if (bufferIndex >= 0)
+                SelBufferIndex = bufferIndex;
+
+            //#BINARY FILTER#13 채널 정보가 유지되도록, eImageChannel.None 타입을 추가
+            if (imageChannel != eImageChannel.None)
+                SelImageChannel = imageChannel;
+
             if (Global.Inst.InspStage.ImageSpace is null)
                 return null;
 
-            return Global.Inst.InspStage.ImageSpace.GetBitmap();
+            return Global.Inst.InspStage.ImageSpace.GetBitmap(SelBufferIndex, SelImageChannel);
         }
 
         //#7_BINARY_PREVIEW#4 이진화 프리뷰를 위해, ImageSpace에서 이미지 가져오기
@@ -509,10 +518,6 @@ namespace sssongVision.Core
         {
             if (bufferIndex >= 0)
                 SelBufferIndex = bufferIndex;
-
-            //#BINARY FILTER#14 채널 정보가 유지되도록, eImageChannel.None 타입을 추가
-            if (imageChannel != eImageChannel.None)
-                SelImageChannel = imageChannel;
 
             return Global.Inst.InspStage.ImageSpace.GetMat(SelBufferIndex, SelImageChannel);
         }
@@ -573,6 +578,9 @@ namespace sssongVision.Core
 
             UpdateDiagramEntity();
 
+            //#16_LAST_MODELOPEN#3 마지막 저장 모델 경로를 레지스트리에 저장
+            _regKey.SetValue("LastestModelPath", filePath);
+
             return true;
         }
 
@@ -585,6 +593,22 @@ namespace sssongVision.Core
                 Global.Inst.InspStage.CurModel.Save();
             else
                 Global.Inst.InspStage.CurModel.SaveAs(filePath);
+        }
+
+        //#16_LAST_MODELOPEN 마지막 모델 열기 함수 구현
+        private bool LastestModelOpen()
+        {
+            if (_lastestModelOpen) return true;
+
+            _lastestModelOpen = true;
+
+            string lastestModel = (string)_regKey.GetValue("LastestModelPath");
+            if (File.Exists(lastestModel) == false) return true;
+
+            DialogResult result = MessageBox.Show($"최근 모델을 로딩할까요?\r\n{lastestModel}", "Question", MessageBoxButtons.YesNo);
+            if (result == DialogResult.No) return true;
+
+            return LoadModel(lastestModel);
         }
 
         //#15_INSP_WORKER#9 자동 연속 검사 함수
@@ -658,8 +682,7 @@ namespace sssongVision.Core
             if (_inspWorker != null)
                 _inspWorker.Stop();
 
-            //#17_WORKING_STATE 내용 (SetWorkingState)
-            //SetWorkingState(WorkingState.NONE);
+            SetWorkingState(WorkingState.NONE);
         }
 
         public bool InspectReady(string lotNumber, string serialID)
@@ -692,10 +715,19 @@ namespace sssongVision.Core
             LiveMode = false;
             UseCamera = SettingXml.Instance.CamType != CameraType.None ? true : false;
 
-            //#17_WORKING_STATE 내용 (SetWorkingState)
-            //SetWorkingState(WorkingState.INSPECT);
+            SetWorkingState(WorkingState.INSPECT);
 
             return true;
+        }
+
+        //#17_WORKING_STATE#2 작업 상태 설정
+        public void SetWorkingState(WorkingState workingState)
+        {
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SetWorkingState(workingState);
+            }
         }
 
         #region Disposable
@@ -719,6 +751,9 @@ namespace sssongVision.Core
                         _grabManager.Dispose();
                         _grabManager = null;
                     }
+
+                    //#16_LAST_MODELOPEN#4 registry 키를 닫습니다.
+                    _regKey.Close();
                 }
 
                 // Dispose unmanaged managed resources.

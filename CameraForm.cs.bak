@@ -75,7 +75,7 @@ namespace sssongVision
 
         public Mat GetDisplayImage()
         {
-            return Global.Inst.InspStage.ImageSpace.GetMat();
+            return Global.Inst.InspStage.ImageSpace.GetMat(0, _currentImageChannel);
         }
 
         private void CameraForm_Resize(object sender, EventArgs e)
@@ -108,7 +108,6 @@ namespace sssongVision
 
         public void UpdateImageViewer()
         {
-			imageViewer.UpdateInspParam();
             imageViewer.Invalidate();
         }
 
@@ -167,29 +166,6 @@ namespace sssongVision
         public void SetInspResultCount(int totalArea, int okCnt, int ngCnt)
         {
             imageViewer.SetInspResultCount(new InspectResultCount(totalArea, okCnt, ngCnt));
-        }
-
-        //#17_WORKING_STATE#5 작업 상태 화면 표시 설정
-        public void SetWorkingState(WorkingState workingState)
-        {
-            string state = "";
-            switch (workingState)
-            {
-                case WorkingState.INSPECT:
-                    state = "INSPECT";
-                    break;
-
-                case WorkingState.LIVE:
-                    state = "LIVE";
-                    break;
-
-                case WorkingState.ALARM:
-                    state = "ALARM";
-                    break;
-            }
-
-            imageViewer.WorkingState = state;
-            imageViewer.Invalidate();
         }
     }
 }
