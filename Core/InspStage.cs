@@ -171,6 +171,10 @@ namespace sssongVision.Core
             }
 
             SetBuffer(bufferCount);
+
+            //#18_IMAGE_CHANNEL#7 카메라 칼라 여부에 따라, 기본 채널 설정
+            eImageChannel imageChannel = (pixelBpp == 24) ? eImageChannel.Color : eImageChannel.Gray;
+            SetImageChannel(imageChannel);
         }
 
         //#11_MATCHING#10 카메라 촬상 이미지와 파일 이미지 로딩시, 
@@ -291,6 +295,11 @@ namespace sssongVision.Core
             MatchAlgorithm matchAlgo = (MatchAlgorithm)inspWindow.FindInspAlgorithm(InspectType.InspMatch);
             if (matchAlgo != null)
             {
+                //#18_IMAGE_CHANNEL#8 패턴매칭 이미지 채널 설정, 칼라인 경우 그레이로 변경
+                matchAlgo.ImageChannel = SelImageChannel;
+                if (matchAlgo.ImageChannel == eImageChannel.Color)
+                    matchAlgo.ImageChannel = eImageChannel.Gray;
+
                 UpdateProperty(inspWindow);
             }
         }
@@ -495,6 +504,27 @@ namespace sssongVision.Core
             {
                 cameraForm.UpdateDisplay(bitmap);
             }
+        }
+
+        //#18_IMAGE_CHANNEL#5 이미지 채널을 설정하는 함수
+        public void SetImageChannel(eImageChannel channel)
+        {
+            var cameraForm = MainForm.GetDockForm<CameraForm>();
+            if (cameraForm != null)
+            {
+                cameraForm.SetImageChannel(channel);
+            }
+        }
+
+        //#18_IMAGE_CHANNEL#6 프리뷰 이미지 채널을 설정하는 함수
+        public void SetPreviewImage(eImageChannel channel)
+        {
+            if (_previewImage is null) return;
+
+            Bitmap bitmap = ImageSpace.GetBitmap(0, channel);
+            _previewImage.SetImage(BitmapConverter.ToMat(bitmap));
+
+            SetImageChannel(channel);
         }
 
         //비트맵 이미지 요청시, 이미지 채널이 있다면 SelImageChangel에 설정
