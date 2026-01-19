@@ -17,6 +17,8 @@ using sssongVision.Util;
 using System.Security.RightsManagement;
 using System.Windows.Forms;
 using Microsoft.Win32;
+using sssongVision.Sequence;
+using System.Data.SqlClient;
 
 namespace sssongVision.Core
 {
@@ -54,9 +56,15 @@ namespace sssongVision.Core
         private bool _lastestModelOpen = false;
 
         public bool UseCamera { get; set; } = false;
+        public bool SaveCamImage { get; set; } = false;
+        public int SaveImageIndex { get; set; } = 0;
+
+        private string _capturePath = "";
 
         private string _lotNumber;
         private string _serialID;
+
+        private bool _isInspectMode = false;
 
         public InspStage() { }
 
@@ -116,6 +124,8 @@ namespace sssongVision.Core
             //#10_INSPWINDOW#10 모델 인스턴스 생성
             _model = new Model();
 
+            LoadSetting();
+
             switch (_camType)
             {
                 // 카메라 타입에 따른 카메라 인스턴스 생성
@@ -137,6 +147,10 @@ namespace sssongVision.Core
 
                 InitModelGrab(MAX_GRAB_BUF);
             }
+
+            //#19_VISION_SEQUENCE#3 VisionSequence 초기화
+            VisionSequence.Instance.InitSequence();
+            VisionSequence.Instance.SeqCommand += SeqCommand;
 
             //#16_LAST_MODELOPEN#5 마지막 모델 열기 여부 확인
             if (!LastestModelOpen())
@@ -712,9 +726,76 @@ namespace sssongVision.Core
             if (_inspWorker != null)
                 _inspWorker.Stop();
 
+            //#19_VISION_SEQUENCE#4 시퀀스 정지
+            VisionSequence.Instance.StopAutoRun();
+            _isInspectMode = false;
+
             SetWorkingState(WorkingState.NONE);
         }
 
+        //#19_VISION_SEQUENCE#7 시퀀스 명령 처리
+        private void SeqCommand(object sender, SeqCmd seqCmd, object Param)
+        {
+            switch (seqCmd)
+            {
+                case SeqCmd.InspStart:
+                    {
+                        //#WCF_FSM#5 카메라 촬상 후, 검사 진행
+                        SLogger.Write("MMI : InspStart", SLogger.LogType.Info);
+
+                        //검사 시작
+                        string errMsg;
+
+                        if (UseCamera)
+                        {
+                            if (!Grab(0))
+                            {
+                                errMsg = string.Format("Failed to grab");
+                                SLogger.Write(errMsg, SLogger.LogType.Error);
+                            }
+                        }
+                        else
+                        {
+                            if (!VirtualGrab())
+                            {
+                                errMsg = string.Format("Failed to virtual grab");
+                                SLogger.Write(errMsg, SLogger.LogType.Error);
+                            }
+                        }
+                    }
+                    break;
+                case SeqCmd.InspEnd:
+                    {
+                        SLogger.Write("MMI : InspEnd", SLogger.LogType.Info);
+
+                        //모든 검사 종료
+                        string errMsg = "";
+
+                        //검사 완료에 대한 처리
+                        SLogger.Write("검사 종료");
+
+                        VisionSequence.Instance.VisionCommand(Vision2Mmi.InspEnd, errMsg);
+                    }
+                    break;
+            }
+        }
+
+        private void RunInspect()
+        {
+            ResetDisplay();
+
+            bool isDefect = false;
+            if (!_inspWorker.RunInspect(out isDefect))
+            {
+                string errMsg = string.Format("Failed to inspect");
+                SLogger.Write(errMsg, SLogger.LogType.Error);
+            }
+
+            //#WCF_FSM#6 비젼 -> 제어에 검사 완료 및 결과 전송
+            VisionSequence.Instance.VisionCommand(Vision2Mmi.InspDone, isDefect);
+        }
+
+        //검사를 위한 준비 작업
         public bool InspectReady(string lotNumber, string serialID)
         {
             _lotNumber = lotNumber;
@@ -734,6 +815,32 @@ namespace sssongVision.Core
         {
             SLogger.Write("Action : StartAutoRun");
 
+            if (SaveCamImage && _model != null)
+            {
+                SaveImageIndex = 0;
+
+                _capturePath = Path.Combine(Path.GetDirectoryName(_model.ModelPath), "Capture");
+                if (!Directory.Exists(_capturePath))
+                {
+                    Directory.CreateDirectory(_capturePath);
+                }
+                else
+                {
+                    string[] files = Directory.GetFiles(_capturePath);
+                    foreach (string file in files)
+                    {
+                        try
+                        {
+                            File.Delete(file);
+                        }
+                        catch (Exception ex)
+                        {
+                            SLogger.Write($"Failed to delete file: {file}. Exception: {ex.Message}", SLogger.LogType.Error);
+                        }
+                    }
+                }
+            }
+
             string modelPath = CurModel.ModelPath;
             if (modelPath == "")
             {
@@ -747,6 +854,10 @@ namespace sssongVision.Core
 
             SetWorkingState(WorkingState.INSPECT);
 
+            //#19_VISION_SEQUENCE#5 자동검사 시작
+            string modelName = Path.GetFileNameWithoutExtension(modelPath);
+            VisionSequence.Instance.StartAutoRun(modelName);
+            _isInspectMode = true;
             return true;
         }
 
@@ -771,6 +882,10 @@ namespace sssongVision.Core
                 if (disposing)
                 {
                     // Dispose managed resources.
+
+                    //#19_VISION_SEQUENCE#6 시퀀스 이벤트 해제
+                    VisionSequence.Instance.SeqCommand -= SeqCommand;
+
                     if (_saigeAI != null)
                     {
                         _saigeAI.Dispose();
@@ -787,7 +902,6 @@ namespace sssongVision.Core
                 }
 
                 // Dispose unmanaged managed resources.
-
                 disposed = true;
             }
         }
